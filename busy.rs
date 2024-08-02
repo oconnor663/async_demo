@@ -33,8 +33,10 @@ async fn foo(message: &str) {
 }
 
 async fn async_main() {
-    foo("one").await;
-    future::join(foo("two"), foo("three")).await;
+    foo("A").await;
+    let b = foo("B");
+    let c = foo("C");
+    future::join(b, c).await;
 }
 
 fn main() {
