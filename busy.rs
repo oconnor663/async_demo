@@ -42,5 +42,7 @@ async fn async_main() {
 fn main() {
     let mut main_future = pin!(async_main());
     let mut context = Context::from_waker(noop_waker_ref());
-    while main_future.as_mut().poll(&mut context).is_pending() {}
+    while main_future.as_mut().poll(&mut context).is_pending() {
+        // busy loop!
+    }
 }
