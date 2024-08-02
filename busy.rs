@@ -21,8 +21,8 @@ impl Future for SleepFuture {
     }
 }
 
-fn async_sleep(seconds: f32) -> SleepFuture {
-    let wake_time = Instant::now() + Duration::from_secs_f32(seconds);
+fn async_sleep(seconds: f64) -> SleepFuture {
+    let wake_time = Instant::now() + Duration::from_secs_f64(seconds);
     SleepFuture { wake_time }
 }
 
