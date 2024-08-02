@@ -48,8 +48,28 @@ async fn bar() {
     println!("bar end");
 }
 
+fn join(f1: impl Future, f2: impl Future) -> impl Future {
+    let mut f1 = Box::pin(f1);
+    let mut f2 = Box::pin(f2);
+    let mut f1_pending = true;
+    let mut f2_pending = true;
+    std::future::poll_fn(move |context| {
+        if f1_pending {
+            f1_pending = f1.as_mut().poll(context).is_pending();
+        }
+        if f2_pending {
+            f2_pending = f2.as_mut().poll(context).is_pending();
+        }
+        if f1_pending || f2_pending {
+            Poll::Pending
+        } else {
+            Poll::Ready(())
+        }
+    })
+}
+
 async fn async_main() {
-    futures::future::join(foo(), bar()).await;
+    join(foo(), bar()).await;
 }
 
 fn main() {

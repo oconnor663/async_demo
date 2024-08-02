@@ -11,5 +11,9 @@ path = "sleepy.rs"
 name = "busy"
 path = "busy.rs"
 
+[[bin]]
+name = "join"
+path = "join.rs"
+
 [dependencies]
 futures = "0.3.30"
