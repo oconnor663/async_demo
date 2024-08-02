@@ -35,7 +35,7 @@ fn async_sleep(seconds: f32) -> SleepFuture {
 }
 
 async fn foo(message: &str) {
-    async_sleep(3.0).await;
+    async_sleep(2.0).await;
     println!("{message}");
 }
 
