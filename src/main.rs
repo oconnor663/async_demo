@@ -29,27 +29,27 @@ impl Future for SleepFuture {
     }
 }
 
-fn sleep(seconds: f32) -> SleepFuture {
-    let end_time = Instant::now() + Duration::from_secs_f32(seconds);
-    SleepFuture { end_time }
-}
-
-async fn foo(message: &str) {
-    sleep(1.0).await;
-    println!("{message}");
-}
-
-async fn async_main() {
-    foo("one").await;
-    future::join(foo("two"), foo("three")).await;
-}
-
 struct ThreadWaker(Thread);
 
 impl Wake for ThreadWaker {
     fn wake(self: Arc<Self>) {
         self.0.unpark();
     }
+}
+
+fn async_sleep(seconds: f32) -> SleepFuture {
+    let end_time = Instant::now() + Duration::from_secs_f32(seconds);
+    SleepFuture { end_time }
+}
+
+async fn foo(message: &str) {
+    async_sleep(1.0).await;
+    println!("{message}");
+}
+
+async fn async_main() {
+    foo("one").await;
+    future::join(foo("two"), foo("three")).await;
 }
 
 fn main() {
