@@ -28,13 +28,13 @@ fn async_sleep(seconds: f32) -> SleepFuture {
 
 async fn foo() {
     println!("foo start");
-    async_sleep(3.0).await;
+    async_sleep(2.0).await;
     println!("foo end");
 }
 
 async fn bar() {
     println!("bar start");
-    async_sleep(3.0).await;
+    async_sleep(2.0).await;
     println!("bar end");
 }
 
