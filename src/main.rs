@@ -1,4 +1,5 @@
 use futures::future;
+use futures::task::noop_waker_ref;
 use std::future::Future;
 use std::pin::{pin, Pin};
 use std::task::{Context, Poll};
@@ -45,9 +46,8 @@ async fn async_main() {
 
 fn main() {
     let mut main_future = pin!(async_main());
-    let waker = noop_waker::noop_waker();
-    let mut context = Context::from_waker(&waker);
-    while let Poll::Pending = main_future.as_mut().poll(&mut context) {
+    let mut context = Context::from_waker(noop_waker_ref());
+    while main_future.as_mut().poll(&mut context).is_pending() {
         thread::park();
     }
 }
