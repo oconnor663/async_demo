@@ -1,4 +1,3 @@
-use futures::future;
 use futures::task::noop_waker_ref;
 use std::future::Future;
 use std::pin::{pin, Pin};
@@ -40,7 +39,7 @@ async fn bar() {
 }
 
 async fn async_main() {
-    future::join(foo(), bar()).await;
+    futures::future::join(foo(), bar()).await;
 }
 
 fn main() {

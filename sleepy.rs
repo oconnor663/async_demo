@@ -1,9 +1,7 @@
-use futures::future;
 use futures::task::noop_waker_ref;
 use std::future::Future;
 use std::pin::{pin, Pin};
 use std::task::{Context, Poll};
-use std::thread;
 use std::time::{Duration, Instant};
 
 struct SleepFuture {
@@ -19,9 +17,9 @@ impl Future for SleepFuture {
             Poll::Ready(())
         } else {
             let sleep_duration = self.end_time - now;
-            let main_thread = thread::current();
-            thread::spawn(move || {
-                thread::sleep(sleep_duration);
+            let main_thread = std::thread::current();
+            std::thread::spawn(move || {
+                std::thread::sleep(sleep_duration);
                 main_thread.unpark();
             });
             Poll::Pending
@@ -47,13 +45,13 @@ async fn bar() {
 }
 
 async fn async_main() {
-    future::join(foo(), bar()).await;
+    futures::future::join(foo(), bar()).await;
 }
 
 fn main() {
     let mut main_future = pin!(async_main());
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
-        thread::park();
+        std::thread::park();
     }
 }
