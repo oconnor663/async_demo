@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 futures = "0.3.30"
+noop-waker = "0.1.0"

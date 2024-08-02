@@ -1,9 +1,8 @@
 use futures::future;
 use std::future::Future;
 use std::pin::{pin, Pin};
-use std::sync::Arc;
-use std::task::{Context, Poll, Wake, Waker};
-use std::thread::{self, Thread};
+use std::task::{Context, Poll};
+use std::thread;
 use std::time::{Duration, Instant};
 
 struct SleepFuture {
@@ -13,27 +12,19 @@ struct SleepFuture {
 impl Future for SleepFuture {
     type Output = ();
 
-    fn poll(self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
+    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<()> {
         let now = Instant::now();
         if now >= self.end_time {
             Poll::Ready(())
         } else {
             let sleep_duration = self.end_time - now;
-            let waker = context.waker().clone();
+            let main_thread = thread::current();
             thread::spawn(move || {
                 thread::sleep(sleep_duration);
-                waker.wake();
+                main_thread.unpark();
             });
             Poll::Pending
         }
-    }
-}
-
-struct ThreadWaker(Thread);
-
-impl Wake for ThreadWaker {
-    fn wake(self: Arc<Self>) {
-        self.0.unpark();
     }
 }
 
@@ -54,7 +45,7 @@ async fn async_main() {
 
 fn main() {
     let mut main_future = pin!(async_main());
-    let waker = Waker::from(Arc::new(ThreadWaker(thread::current())));
+    let waker = noop_waker::noop_waker();
     let mut context = Context::from_waker(&waker);
     while let Poll::Pending = main_future.as_mut().poll(&mut context) {
         thread::park();
