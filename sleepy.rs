@@ -34,16 +34,20 @@ fn async_sleep(seconds: f32) -> SleepFuture {
     SleepFuture { end_time }
 }
 
-async fn foo(message: &str) {
-    async_sleep(2.0).await;
-    println!("{message}");
+async fn foo() {
+    println!("foo start");
+    async_sleep(3.0).await;
+    println!("foo end");
+}
+
+async fn bar() {
+    println!("bar start");
+    async_sleep(3.0).await;
+    println!("bar end");
 }
 
 async fn async_main() {
-    foo("A").await;
-    let b = foo("B");
-    let c = foo("C");
-    future::join(b, c).await;
+    future::join(foo(), bar()).await;
 }
 
 fn main() {
