@@ -31,25 +31,45 @@ impl Future for SleepFuture {
     }
 }
 
-fn async_sleep(seconds: f64) -> SleepFuture {
-    let wake_time = Instant::now() + Duration::from_secs_f64(seconds);
+fn sleep(duration: Duration) -> SleepFuture {
+    let wake_time = Instant::now() + duration;
     SleepFuture { wake_time }
 }
 
 async fn foo() {
     println!("foo start");
-    async_sleep(2.0).await;
+    sleep(Duration::from_secs_f64(2.0)).await;
     println!("foo end");
 }
 
 async fn bar() {
     println!("bar start");
-    async_sleep(2.5).await;
+    sleep(Duration::from_secs_f64(2.5)).await;
     println!("bar end");
 }
 
+fn join(f1: impl Future, f2: impl Future) -> impl Future {
+    let mut f1 = Box::pin(f1);
+    let mut f2 = Box::pin(f2);
+    let mut f1_pending = true;
+    let mut f2_pending = true;
+    std::future::poll_fn(move |context| {
+        if f1_pending {
+            f1_pending = f1.as_mut().poll(context).is_pending();
+        }
+        if f2_pending {
+            f2_pending = f2.as_mut().poll(context).is_pending();
+        }
+        if f1_pending || f2_pending {
+            Poll::Pending
+        } else {
+            Poll::Ready(())
+        }
+    })
+}
+
 async fn async_main() {
-    futures::future::join(foo(), bar()).await;
+    join(foo(), bar()).await;
 }
 
 fn main() {
