@@ -3,13 +3,13 @@ use std::time::Duration;
 
 fn foo() {
     println!("foo start");
-    sleep(Duration::from_secs_f64(2.0));
+    sleep(Duration::from_secs_f64(2.5));
     println!("foo end");
 }
 
 fn bar() {
     println!("bar start");
-    sleep(Duration::from_secs_f64(2.5));
+    sleep(Duration::from_secs_f64(2.0));
     println!("bar end");
 }
 
