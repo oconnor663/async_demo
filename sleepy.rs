@@ -48,24 +48,38 @@ async fn bar() {
     println!("bar end");
 }
 
-fn join(f1: impl Future, f2: impl Future) -> impl Future {
-    let mut f1 = Box::pin(f1);
-    let mut f2 = Box::pin(f2);
-    let mut f1_pending = true;
-    let mut f2_pending = true;
-    std::future::poll_fn(move |context| {
-        if f1_pending {
-            f1_pending = f1.as_mut().poll(context).is_pending();
+fn join<F1, F2>(f1: F1, f2: F2) -> JoinFuture<F1, F2> {
+    JoinFuture {
+        f1: Box::pin(f1),
+        f1_ready: false,
+        f2: Box::pin(f2),
+        f2_ready: false,
+    }
+}
+
+struct JoinFuture<F1, F2> {
+    f1: Pin<Box<F1>>,
+    f1_ready: bool,
+    f2: Pin<Box<F2>>,
+    f2_ready: bool,
+}
+
+impl<F1: Future, F2: Future> Future for JoinFuture<F1, F2> {
+    type Output = ();
+
+    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
+        if !self.f1_ready {
+            self.f1_ready = self.f1.as_mut().poll(context).is_ready();
         }
-        if f2_pending {
-            f2_pending = f2.as_mut().poll(context).is_pending();
+        if !self.f2_ready {
+            self.f2_ready = self.f2.as_mut().poll(context).is_ready();
         }
-        if f1_pending || f2_pending {
-            Poll::Pending
-        } else {
+        if self.f1_ready && self.f2_ready {
             Poll::Ready(())
+        } else {
+            Poll::Pending
         }
-    })
+    }
 }
 
 async fn async_main() {
