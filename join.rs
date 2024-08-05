@@ -1,17 +1,17 @@
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use tokio::time::{sleep, Duration};
+use std::time::Duration;
 
 async fn foo() {
     println!("foo start");
-    sleep(Duration::from_secs_f64(2.5)).await;
+    tokio::time::sleep(Duration::from_secs_f64(2.5)).await;
     println!("foo end");
 }
 
 async fn bar() {
     println!("bar start");
-    sleep(Duration::from_secs_f64(2.0)).await;
+    tokio::time::sleep(Duration::from_secs_f64(2.0)).await;
     println!("bar end");
 }
 
