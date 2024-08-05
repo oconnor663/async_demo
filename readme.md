@@ -4,6 +4,11 @@
 - Tokio version using join
   - using std::thread::sleep ruins the concurrency
   - this is how we know it was running on one thread before
+- write our own foo/bar future
+  - If we eagerly return Pending on the first poll, we never wake up.
+  - Why not print in the constructor and get rid of is_start?
+    - That's not what `async fn` does, because `async fn` needs the future to
+      be pinned.
 - write our own join
   - do it wrong with two loops
 - write our own sleep

@@ -20,8 +20,12 @@ name = "tokio"
 path = "tokio.rs"
 
 [[bin]]
-name = "sleep_mistake"
-path = "sleep_mistake.rs"
+name = "tokio_mistake"
+path = "tokio_mistake.rs"
+
+[[bin]]
+name = "foobar"
+path = "foobar.rs"
 
 [[bin]]
 name = "join"
