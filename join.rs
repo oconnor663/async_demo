@@ -15,15 +15,6 @@ async fn bar() {
     println!("bar end");
 }
 
-fn join<F1, F2>(f1: F1, f2: F2) -> JoinFuture<F1, F2> {
-    JoinFuture {
-        f1: Box::pin(f1),
-        f1_ready: false,
-        f2: Box::pin(f2),
-        f2_ready: false,
-    }
-}
-
 struct JoinFuture<F1, F2> {
     f1: Pin<Box<F1>>,
     f1_ready: bool,
@@ -46,6 +37,15 @@ impl<F1: Future, F2: Future> Future for JoinFuture<F1, F2> {
         } else {
             Poll::Pending
         }
+    }
+}
+
+fn join<F1, F2>(f1: F1, f2: F2) -> JoinFuture<F1, F2> {
+    JoinFuture {
+        f1: Box::pin(f1),
+        f1_ready: false,
+        f2: Box::pin(f2),
+        f2_ready: false,
     }
 }
 

@@ -13,13 +13,6 @@ fn bar() {
     println!("bar end");
 }
 
-fn join(f1: fn(), f2: fn()) {
-    let thread1 = std::thread::spawn(f1);
-    let thread2 = std::thread::spawn(f2);
-    thread1.join().unwrap();
-    thread2.join().unwrap();
-}
-
 fn main() {
-    join(foo, bar);
+    rayon::join(foo, bar);
 }

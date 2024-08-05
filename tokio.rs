@@ -1,4 +1,3 @@
-use futures::future::join;
 use tokio::time::{sleep, Duration};
 
 async fn foo() {
@@ -15,5 +14,5 @@ async fn bar() {
 
 #[tokio::main]
 async fn main() {
-    join(foo(), bar()).await;
+    futures::future::join(foo(), bar()).await;
 }
