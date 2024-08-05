@@ -8,8 +8,20 @@ name = "regular"
 path = "regular.rs"
 
 [[bin]]
+name = "threads"
+path = "threads.rs"
+
+[[bin]]
+name = "rayon"
+path = "rayon.rs"
+
+[[bin]]
 name = "tokio"
 path = "tokio.rs"
+
+[[bin]]
+name = "sleep_mistake"
+path = "sleep_mistake.rs"
 
 [[bin]]
 name = "sleepy"

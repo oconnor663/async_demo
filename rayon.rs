@@ -13,6 +13,5 @@ fn bar() {
 }
 
 fn main() {
-    foo();
-    bar();
+    rayon::join(foo, bar);
 }

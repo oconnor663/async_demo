@@ -1,6 +1,6 @@
 - regular program calling foo() and bar() in series
 - use threads to make it parallel
-  - write a join function, emphasize that "join" means different things
+  - first with std::thread::spawn, then with rayon::join
 - Tokio version using join
   - using std::thread::sleep ruins the concurrency
   - this is how we know it was running on one thread before

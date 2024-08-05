@@ -1,18 +1,18 @@
 use std::time::Duration;
 
-fn foo() {
+async fn foo() {
     println!("foo start");
     std::thread::sleep(Duration::from_secs_f64(2.5));
     println!("foo end");
 }
 
-fn bar() {
+async fn bar() {
     println!("bar start");
     std::thread::sleep(Duration::from_secs_f64(2.0));
     println!("bar end");
 }
 
-fn main() {
-    foo();
-    bar();
+#[tokio::main]
+async fn main() {
+    futures::future::join(foo(), bar()).await;
 }
