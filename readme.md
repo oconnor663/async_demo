@@ -1,0 +1,18 @@
+- regular program calling foo() and bar() in series
+- use threads to make it parallel
+  - write a join function, emphasize that "join" means different things
+- Tokio version using join
+  - using std::thread::sleep ruins the concurrency
+  - this is how we know it was running on one thread before
+- write our own join
+  - do it wrong with two loops
+- write our own sleep
+  - doesn't work, because it doesn't wake
+- use threads to wake it
+- rewrite the event loop to busy wait
+  - follow the execution line-by-line
+- use a thread_local
+- follow-up topics
+  - tasks and the Context parameter
+  - Pin
+  - real IO
