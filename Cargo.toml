@@ -24,8 +24,8 @@ name = "tokio_blocking"
 path = "tokio_blocking.rs"
 
 [[bin]]
-name = "sleep_broken"
-path = "sleep_broken.rs"
+name = "sleep_forever"
+path = "sleep_forever.rs"
 
 [[bin]]
 name = "sleep_thread"
