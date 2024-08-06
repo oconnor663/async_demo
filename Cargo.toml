@@ -40,8 +40,8 @@ name = "sleepy"
 path = "sleepy.rs"
 
 [[bin]]
-name = "foobar"
-path = "foobar.rs"
+name = "foo"
+path = "foo.rs"
 
 [[bin]]
 name = "join"
