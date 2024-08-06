@@ -85,12 +85,10 @@ fn main() {
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
         let mut next_wake_time = NEXT_WAKE_TIME.lock().unwrap();
-        let sleep_duration = next_wake_time
-            .expect("somebody should want a wakeup")
-            .checked_duration_since(Instant::now());
-        if let Some(duration) = sleep_duration {
-            *next_wake_time = None;
-            std::thread::sleep(duration);
-        }
+        let duration = next_wake_time
+            .expect("pending sleeps must register a wakeup")
+            .saturating_duration_since(Instant::now());
+        *next_wake_time = None;
+        std::thread::sleep(duration);
     }
 }
