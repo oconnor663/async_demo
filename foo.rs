@@ -1,11 +1,13 @@
 use futures::task::noop_waker_ref;
+use std::cell::Cell;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::Mutex;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
-static NEXT_WAKE_TIME: Mutex<Option<Instant>> = Mutex::new(None);
+std::thread_local! {
+    static NEXT_WAKE_TIME: Cell<Option<Instant>> = Cell::new(None);
+}
 
 struct SleepFuture {
     wake_time: Instant,
@@ -19,9 +21,9 @@ impl Future for SleepFuture {
         if now >= self.wake_time {
             Poll::Ready(())
         } else {
-            let mut next_wake_time = NEXT_WAKE_TIME.lock().unwrap();
-            if next_wake_time.is_none() || self.wake_time < next_wake_time.unwrap() {
-                *next_wake_time = Some(self.wake_time);
+            let next = NEXT_WAKE_TIME.get();
+            if next.is_none() || self.wake_time < next.unwrap() {
+                NEXT_WAKE_TIME.set(Some(self.wake_time));
             }
             Poll::Pending
         }
@@ -84,11 +86,9 @@ fn main() {
     let mut main_future = Box::pin(futures::future::join(foo(), bar()));
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
-        let mut next_wake_time = NEXT_WAKE_TIME.lock().unwrap();
-        let duration = next_wake_time
-            .expect("pending sleeps must register a wakeup")
-            .saturating_duration_since(Instant::now());
-        *next_wake_time = None;
+        let next = NEXT_WAKE_TIME.get().expect("someone must want a wakeup");
+        let duration = next.saturating_duration_since(Instant::now());
+        NEXT_WAKE_TIME.set(None);
         std::thread::sleep(duration);
     }
 }
