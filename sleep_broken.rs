@@ -10,7 +10,7 @@ struct SleepFuture {
 impl Future for SleepFuture {
     type Output = ();
 
-    fn poll(self: Pin<&mut Self>, _context: &mut Context) -> Poll<()> {
+    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<()> {
         let now = Instant::now();
         if now >= self.wake_time {
             Poll::Ready(())
