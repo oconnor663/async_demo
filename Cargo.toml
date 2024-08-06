@@ -20,12 +20,16 @@ name = "tokio"
 path = "tokio.rs"
 
 [[bin]]
-name = "tokio_mistake"
-path = "tokio_mistake.rs"
+name = "std_sleep"
+path = "std_sleep.rs"
 
 [[bin]]
 name = "sleep_broken"
 path = "sleep_broken.rs"
+
+[[bin]]
+name = "sleep_thread"
+path = "sleep_thread.rs"
 
 [[bin]]
 name = "foobar"
