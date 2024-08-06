@@ -24,6 +24,10 @@ name = "tokio_mistake"
 path = "tokio_mistake.rs"
 
 [[bin]]
+name = "sleep_broken"
+path = "sleep_broken.rs"
+
+[[bin]]
 name = "foobar"
 path = "foobar.rs"
 
