@@ -1,14 +1,23 @@
 use std::time::Duration;
 
+fn sleep(seconds: f64) {
+    let duration = Duration::from_secs_f64(seconds);
+    std::thread::sleep(duration);
+}
+
 fn foo() {
     println!("foo start");
-    std::thread::sleep(Duration::from_secs_f64(2.5));
+    sleep(0.5);
+    println!("foo middle");
+    sleep(1.0);
     println!("foo end");
 }
 
 fn bar() {
     println!("bar start");
-    std::thread::sleep(Duration::from_secs_f64(2.0));
+    sleep(1.0);
+    println!("bar middle");
+    sleep(1.0);
     println!("bar end");
 }
 

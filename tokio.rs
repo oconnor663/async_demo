@@ -1,14 +1,23 @@
 use std::time::Duration;
 
+async fn sleep(seconds: f64) {
+    let duration = Duration::from_secs_f64(seconds);
+    tokio::time::sleep(duration).await;
+}
+
 async fn foo() {
     println!("foo start");
-    tokio::time::sleep(Duration::from_secs_f64(2.5)).await;
+    sleep(0.5).await;
+    println!("foo middle");
+    sleep(1.0).await;
     println!("foo end");
 }
 
 async fn bar() {
     println!("bar start");
-    tokio::time::sleep(Duration::from_secs_f64(2.0)).await;
+    sleep(1.0).await;
+    println!("bar middle");
+    sleep(1.0).await;
     println!("bar end");
 }
 

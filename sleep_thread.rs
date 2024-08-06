@@ -26,20 +26,25 @@ impl Future for SleepFuture {
     }
 }
 
-fn sleep(duration: Duration) -> SleepFuture {
+fn sleep(seconds: f64) -> SleepFuture {
+    let duration = Duration::from_secs_f64(seconds);
     let wake_time = Instant::now() + duration;
     SleepFuture { wake_time }
 }
 
 async fn foo() {
     println!("foo start");
-    sleep(Duration::from_secs_f64(2.5)).await;
+    sleep(0.5).await;
+    println!("foo middle");
+    sleep(1.0).await;
     println!("foo end");
 }
 
 async fn bar() {
     println!("bar start");
-    sleep(Duration::from_secs_f64(2.0)).await;
+    sleep(1.0).await;
+    println!("bar middle");
+    sleep(1.0).await;
     println!("bar end");
 }
 
