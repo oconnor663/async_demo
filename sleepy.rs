@@ -45,12 +45,8 @@ async fn bar() {
     println!("bar end");
 }
 
-async fn async_main() {
-    futures::future::join(foo(), bar()).await;
-}
-
 fn main() {
-    let mut main_future = Box::pin(async_main());
+    let mut main_future = Box::pin(futures::future::join(foo(), bar()));
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
         let mut next_wake_time = NEXT_WAKE_TIME.lock().unwrap();
