@@ -34,10 +34,6 @@ fn sleep(seconds: f64) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
-fn foo() -> FooFuture {
-    FooFuture::Start
-}
-
 enum FooFuture {
     Start,
     FirstSleep(SleepFuture),
@@ -70,6 +66,10 @@ impl Future for FooFuture {
         }
         unreachable!("polled again after Ready");
     }
+}
+
+fn foo() -> FooFuture {
+    FooFuture::Start
 }
 
 async fn bar() {
