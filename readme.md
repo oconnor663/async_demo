@@ -1,14 +1,14 @@
 - regular program calling foo() and bar() in series
 - use threads to make it parallel
   - first with std::thread::spawn, then with rayon::join
-- Tokio version using join
+- Tokio version using futures::future::join
   - using std::thread::sleep ruins the concurrency
   - this is how we know it was running on one thread before
 - write our own sleep
   - no wakeup hangs Tokio forever
-  - a wakeup thread fixes Tokio but defeats the purpose
+  - wakeup threads fix Tokio but defeat the purpose
   - write a custom polling loop with a busy sleep
-  - use a global Mutex and a real sleep
+  - use a thread local and a real sleep
 - write our own foo/bar future
   - If we eagerly return Pending on the first poll, we never wake up.
   - Why not print in the constructor and get rid of is_start?
@@ -16,6 +16,6 @@
       be pinned.
 - write our own join
 - follow-up topics
-  - tasks and the Context parameter
+  - tasks
   - Pin
   - real IO
