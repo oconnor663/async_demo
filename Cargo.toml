@@ -47,6 +47,10 @@ path = "foo.rs"
 name = "join"
 path = "join.rs"
 
+[[bin]]
+name = "first"
+path = "first.rs"
+
 [dependencies]
 futures = "0.3.30"
 rayon = "1.10.0"

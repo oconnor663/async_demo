@@ -15,6 +15,7 @@
     - That's not what `async fn` does, because `async fn` needs the future to
       be pinned.
 - write our own join
+- change join() to first(), cancellation
 - follow-up topics
   - tasks
   - Pin
