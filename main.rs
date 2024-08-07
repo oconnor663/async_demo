@@ -2,7 +2,7 @@ use std::time::Duration;
 
 async fn sleep(seconds: f64) {
     let duration = Duration::from_secs_f64(seconds);
-    tokio::time::sleep(duration).await;
+    std::thread::sleep(duration);
 }
 
 async fn foo() {
