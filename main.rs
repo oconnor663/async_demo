@@ -22,8 +22,5 @@ fn bar() {
 }
 
 fn main() {
-    let t1 = std::thread::spawn(foo);
-    let t2 = std::thread::spawn(bar);
-    t1.join().unwrap();
-    t2.join().unwrap();
+    rayon::join(foo, bar);
 }
