@@ -1,8 +1,13 @@
 use futures::task::noop_waker_ref;
+use std::cell::Cell;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
+
+std::thread_local! {
+    static NEXT_WAKE_TIME: Cell<Option<Instant>> = Cell::new(None);
+}
 
 struct SleepFuture {
     wake_time: Instant,
@@ -16,6 +21,10 @@ impl Future for SleepFuture {
         if now >= self.wake_time {
             Poll::Ready(())
         } else {
+            let next = NEXT_WAKE_TIME.get();
+            if next.is_none() || self.wake_time < next.unwrap() {
+                NEXT_WAKE_TIME.set(Some(self.wake_time));
+            }
             Poll::Pending
         }
     }
@@ -47,6 +56,9 @@ fn main() {
     let mut main_future = Box::pin(futures::future::join(foo(), bar()));
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
-        // busy loop!
+        let next = NEXT_WAKE_TIME.get().expect("someone must want a wakeup");
+        let duration = next.saturating_duration_since(Instant::now());
+        NEXT_WAKE_TIME.set(None);
+        std::thread::sleep(duration);
     }
 }
