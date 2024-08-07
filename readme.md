@@ -1,6 +1,7 @@
 - regular program calling foo() and bar() in series
 - use threads to make it parallel
   - first with std::thread::spawn, then with rayon::join
+  - try spawning ~20k threads (~500 on the Playgroud)
 - Tokio version using futures::future::join
   - using std::thread::sleep ruins the concurrency
   - this is how we know it was running on one thread before
