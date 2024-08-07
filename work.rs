@@ -27,7 +27,7 @@ impl Future for WorkFuture {
             self.state = WorkState::FirstSleep(Box::pin(sleep_future));
         }
         if let WorkState::FirstSleep(sleep_future) = &mut self.state {
-            if Pin::new(sleep_future).poll(context).is_pending() {
+            if sleep_future.as_mut().poll(context).is_pending() {
                 return Poll::Pending;
             }
             println!("{} middle", self.name);
@@ -35,7 +35,7 @@ impl Future for WorkFuture {
             self.state = WorkState::SecondSleep(Box::pin(sleep_future));
         }
         if let WorkState::SecondSleep(sleep_future) = &mut self.state {
-            if Pin::new(sleep_future).poll(context).is_pending() {
+            if sleep_future.as_mut().poll(context).is_pending() {
                 return Poll::Pending;
             }
             println!("{} end", self.name);

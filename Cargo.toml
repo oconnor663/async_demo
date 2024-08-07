@@ -55,6 +55,10 @@ path = "join.rs"
 name = "first"
 path = "first.rs"
 
+[[bin]]
+name = "combo"
+path = "combo.rs"
+
 [dependencies]
 futures = "0.3.30"
 rayon = "1.10.0"
