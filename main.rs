@@ -1,26 +1,27 @@
 use std::time::Duration;
 
-fn sleep(seconds: f64) {
+async fn sleep(seconds: f64) {
     let duration = Duration::from_secs_f64(seconds);
-    std::thread::sleep(duration);
+    tokio::time::sleep(duration).await;
 }
 
-fn foo() {
+async fn foo() {
     println!("foo start");
-    sleep(0.5);
+    sleep(0.5).await;
     println!("foo middle");
-    sleep(1.0);
+    sleep(1.0).await;
     println!("foo end");
 }
 
-fn bar() {
+async fn bar() {
     println!("bar start");
-    sleep(1.0);
+    sleep(1.0).await;
     println!("bar middle");
-    sleep(1.0);
+    sleep(1.0).await;
     println!("bar end");
 }
 
-fn main() {
-    rayon::join(foo, bar);
+#[tokio::main]
+async fn main() {
+    futures::future::join(foo(), bar()).await;
 }
