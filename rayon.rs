@@ -1,26 +1,14 @@
 use std::time::Duration;
 
-fn sleep(seconds: f64) {
-    let duration = Duration::from_secs_f64(seconds);
-    std::thread::sleep(duration);
-}
-
-fn foo() {
-    println!("foo start");
-    sleep(0.5);
-    println!("foo middle");
-    sleep(1.0);
-    println!("foo end");
-}
-
-fn bar() {
-    println!("bar start");
-    sleep(1.0);
-    println!("bar middle");
-    sleep(1.0);
-    println!("bar end");
+fn work(name: &str, seconds: f32) {
+    let duration = Duration::from_secs_f32(seconds);
+    println!("{name}: start");
+    std::thread::sleep(duration / 2);
+    println!("{name}: middle");
+    std::thread::sleep(duration / 2);
+    println!("{name}: end");
 }
 
 fn main() {
-    rayon::join(foo, bar);
+    rayon::join(|| work("foo", 1.5), || work("bar", 2.0));
 }

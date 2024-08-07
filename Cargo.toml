@@ -4,8 +4,8 @@ version = "0.0.0"
 edition = "2021"
 
 [[bin]]
-name = "regular"
-path = "regular.rs"
+name = "serial"
+path = "serial.rs"
 
 [[bin]]
 name = "threads"
@@ -16,8 +16,12 @@ name = "rayon"
 path = "rayon.rs"
 
 [[bin]]
-name = "tokio"
-path = "tokio.rs"
+name = "tokio_serial"
+path = "tokio_serial.rs"
+
+[[bin]]
+name = "tokio_join"
+path = "tokio_join.rs"
 
 [[bin]]
 name = "tokio_blocking"
@@ -40,8 +44,8 @@ name = "sleepy"
 path = "sleepy.rs"
 
 [[bin]]
-name = "foo"
-path = "foo.rs"
+name = "work"
+path = "work.rs"
 
 [[bin]]
 name = "join"

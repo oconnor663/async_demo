@@ -1,3 +1,4 @@
+use futures::future;
 use futures::task::noop_waker_ref;
 use std::future::Future;
 use std::pin::Pin;
@@ -21,30 +22,22 @@ impl Future for SleepFuture {
     }
 }
 
-fn sleep(seconds: f64) -> SleepFuture {
-    let duration = Duration::from_secs_f64(seconds);
+fn sleep(duration: Duration) -> SleepFuture {
     let wake_time = Instant::now() + duration;
     SleepFuture { wake_time }
 }
 
-async fn foo() {
-    println!("foo start");
-    sleep(0.5).await;
-    println!("foo middle");
-    sleep(1.0).await;
-    println!("foo end");
-}
-
-async fn bar() {
-    println!("bar start");
-    sleep(1.0).await;
-    println!("bar middle");
-    sleep(1.0).await;
-    println!("bar end");
+async fn work(name: &str, seconds: f32) {
+    let duration = Duration::from_secs_f32(seconds);
+    println!("{name}: start");
+    sleep(duration / 2).await;
+    println!("{name}: middle");
+    sleep(duration / 2).await;
+    println!("{name}: end");
 }
 
 fn main() {
-    let mut main_future = Box::pin(futures::future::join(foo(), bar()));
+    let mut main_future = Box::pin(future::join(work("foo", 1.5), work("bar", 2.0)));
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
         // busy loop!

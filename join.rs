@@ -3,25 +3,13 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
 
-async fn sleep(seconds: f64) {
-    let duration = Duration::from_secs_f64(seconds);
-    tokio::time::sleep(duration).await;
-}
-
-async fn foo() {
-    println!("foo start");
-    sleep(0.5).await;
-    println!("foo middle");
-    sleep(1.0).await;
-    println!("foo end");
-}
-
-async fn bar() {
-    println!("bar start");
-    sleep(1.0).await;
-    println!("bar middle");
-    sleep(1.0).await;
-    println!("bar end");
+async fn work(name: &str, seconds: f32) {
+    let duration = Duration::from_secs_f32(seconds);
+    println!("{name}: start");
+    tokio::time::sleep(duration / 2).await;
+    println!("{name}: middle");
+    tokio::time::sleep(duration / 2).await;
+    println!("{name}: end");
 }
 
 struct JoinFuture<F1, F2> {
@@ -60,5 +48,5 @@ fn join<F1, F2>(f1: F1, f2: F2) -> JoinFuture<F1, F2> {
 
 #[tokio::main]
 async fn main() {
-    join(foo(), bar()).await;
+    join(work("foo", 1.5), work("bar", 2.0)).await;
 }

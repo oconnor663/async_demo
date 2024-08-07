@@ -1,16 +1,16 @@
-use futures::future;
 use std::time::Duration;
 
 async fn work(name: &str, seconds: f32) {
     let duration = Duration::from_secs_f32(seconds);
     println!("{name}: start");
-    std::thread::sleep(duration / 2);
+    tokio::time::sleep(duration / 2).await;
     println!("{name}: middle");
-    std::thread::sleep(duration / 2);
+    tokio::time::sleep(duration / 2).await;
     println!("{name}: end");
 }
 
 #[tokio::main]
 async fn main() {
-    future::join(work("foo", 1.5), work("bar", 2.0)).await;
+    work("foo", 1.5).await;
+    work("bar", 2.0).await;
 }
