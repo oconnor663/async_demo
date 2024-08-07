@@ -1,8 +1,29 @@
-use std::time::Duration;
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+use std::time::{Duration, Instant};
 
-async fn sleep(seconds: f64) {
+struct SleepFuture {
+    wake_time: Instant,
+}
+
+impl Future for SleepFuture {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<()> {
+        let now = Instant::now();
+        if now >= self.wake_time {
+            Poll::Ready(())
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
+fn sleep(seconds: f64) -> SleepFuture {
     let duration = Duration::from_secs_f64(seconds);
-    tokio::time::sleep(duration).await;
+    let wake_time = Instant::now() + duration;
+    SleepFuture { wake_time }
 }
 
 async fn foo() {
