@@ -24,14 +24,14 @@ async fn bar() {
     println!("bar end");
 }
 
-struct JoinFuture<F1, F2> {
+struct FirstFuture<F1, F2> {
     f1: Pin<Box<F1>>,
     f1_ready: bool,
     f2: Pin<Box<F2>>,
     f2_ready: bool,
 }
 
-impl<F1: Future, F2: Future> Future for JoinFuture<F1, F2> {
+impl<F1: Future, F2: Future> Future for FirstFuture<F1, F2> {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
@@ -41,7 +41,7 @@ impl<F1: Future, F2: Future> Future for JoinFuture<F1, F2> {
         if !self.f2_ready {
             self.f2_ready = self.f2.as_mut().poll(context).is_ready();
         }
-        if self.f1_ready && self.f2_ready {
+        if self.f1_ready || self.f2_ready {
             Poll::Ready(())
         } else {
             Poll::Pending
@@ -49,8 +49,8 @@ impl<F1: Future, F2: Future> Future for JoinFuture<F1, F2> {
     }
 }
 
-fn join<F1, F2>(f1: F1, f2: F2) -> JoinFuture<F1, F2> {
-    JoinFuture {
+fn first<F1, F2>(f1: F1, f2: F2) -> FirstFuture<F1, F2> {
+    FirstFuture {
         f1: Box::pin(f1),
         f1_ready: false,
         f2: Box::pin(f2),
@@ -60,5 +60,5 @@ fn join<F1, F2>(f1: F1, f2: F2) -> JoinFuture<F1, F2> {
 
 #[tokio::main]
 async fn main() {
-    join(foo(), bar()).await;
+    first(foo(), bar()).await;
 }
