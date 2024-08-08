@@ -9,7 +9,7 @@ use std::task::{Context, Poll, Waker};
 use std::time::{Duration, Instant};
 
 std::thread_local! {
-    static WAKERS: RefCell<BTreeMap<Instant, Waker>> = RefCell::new(BTreeMap::new());
+    static WAKERS: RefCell<BTreeMap<Instant, Vec<Waker>>> = RefCell::new(BTreeMap::new());
 }
 
 struct SleepFuture {
@@ -24,7 +24,9 @@ impl Future for SleepFuture {
             Poll::Ready(())
         } else {
             WAKERS.with_borrow_mut(|tree| {
-                tree.insert(self.wake_time, context.waker().clone());
+                tree.entry(self.wake_time)
+                    .or_default()
+                    .push(context.waker().clone());
             });
             Poll::Pending
         }
@@ -52,13 +54,16 @@ async fn main() {
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
         WAKERS.with_borrow_mut(|tree| {
-            while let Some((&wake_time, waker)) = tree.first_key_value() {
-                let now = Instant::now();
-                if wake_time <= now {
-                    waker.wake_by_ref();
+            let (first_wake_time, _) = tree
+                .first_key_value()
+                .expect("poll returned Pending, so there's at least one Waker");
+            std::thread::sleep(first_wake_time.saturating_duration_since(Instant::now()));
+            while let Some((&wake_time, wakers)) = tree.first_key_value() {
+                if wake_time <= Instant::now() {
+                    wakers.iter().for_each(Waker::wake_by_ref);
                     tree.pop_first();
                 } else {
-                    std::thread::sleep(wake_time.saturating_duration_since(now));
+                    break;
                 }
             }
         });
