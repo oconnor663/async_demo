@@ -32,6 +32,10 @@ name = "tokio_20k"
 path = "tokio_20k.rs"
 
 [[bin]]
+name = "tokio_1m"
+path = "tokio_1m.rs"
+
+[[bin]]
 name = "tokio_blocking"
 path = "tokio_blocking.rs"
 
