@@ -24,8 +24,8 @@ name = "threads_20k"
 path = "threads_20k.rs"
 
 [[bin]]
-name = "rayon"
-path = "rayon.rs"
+name = "rayon_20k"
+path = "rayon_20k.rs"
 
 [[bin]]
 name = "tokio_20k"
