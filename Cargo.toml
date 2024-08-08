@@ -63,6 +63,10 @@ path = "join.rs"
 name = "timeout"
 path = "timeout.rs"
 
+[[bin]]
+name = "tokio_tasks"
+path = "tokio_tasks.rs"
+
 [dependencies]
 futures = "0.3.30"
 rand = "0.8.5"
