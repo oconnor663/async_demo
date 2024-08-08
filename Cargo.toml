@@ -48,6 +48,10 @@ name = "sleep_tls"
 path = "sleep_tls.rs"
 
 [[bin]]
+name = "sleep_wakers"
+path = "sleep_wakers.rs"
+
+[[bin]]
 name = "work"
 path = "work.rs"
 
