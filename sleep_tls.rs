@@ -1,3 +1,4 @@
+use futures::future;
 use futures::task::noop_waker_ref;
 use std::cell::Cell;
 use std::future::Future;
@@ -26,6 +27,10 @@ impl Future for SleepFuture {
             if next.is_none() || self.wake_time < next.unwrap() {
                 NEXT_WAKE_TIME.set(Some(self.wake_time));
             }
+            // Note: It's technically cheating to return Pending here without ever
+            // calling wake. It works in this demo because we know we have a no-op
+            // Context. But it doesn't work with combinators that substitute their
+            // own Context, like JoinAll, FuturesOrdered, or FuturesUnordered.
             Poll::Pending
         }
     }
@@ -38,60 +43,13 @@ fn sleep(duration: Duration) -> SleepFuture {
 
 static X: AtomicU64 = AtomicU64::new(0);
 
-struct WorkFuture {
-    sleep_future: Pin<Box<SleepFuture>>,
+async fn work() {
+    sleep(Duration::from_secs(1)).await;
+    X.fetch_add(1, Relaxed);
 }
 
-impl Future for WorkFuture {
-    type Output = ();
-
-    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        if self.sleep_future.as_mut().poll(context).is_pending() {
-            Poll::Pending
-        } else {
-            X.fetch_add(1, Relaxed);
-            Poll::Ready(())
-        }
-    }
-}
-
-fn work() -> WorkFuture {
-    let sleep_future = sleep(Duration::from_secs(1));
-    WorkFuture {
-        sleep_future: Box::pin(sleep_future),
-    }
-}
-
-struct JoinAll<F> {
-    futures: Vec<Pin<Box<F>>>,
-}
-
-impl<F: Future> Future for JoinAll<F> {
-    type Output = ();
-
-    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        self.futures
-            .retain_mut(|future| future.as_mut().poll(context).is_pending());
-        if self.futures.is_empty() {
-            Poll::Ready(())
-        } else {
-            Poll::Pending
-        }
-    }
-}
-
-fn join_all<F: Future>(futures: Vec<F>) -> JoinAll<F> {
-    JoinAll {
-        futures: futures.into_iter().map(Box::pin).collect(),
-    }
-}
-
-fn lots_of_work() -> JoinAll<WorkFuture> {
-    let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
-    }
-    join_all(futures)
+async fn lots_of_work() {
+    future::join3(work(), work(), work()).await;
 }
 
 fn block_on(future: impl Future) {
@@ -102,8 +60,6 @@ fn block_on(future: impl Future) {
         let duration = next.saturating_duration_since(Instant::now());
         NEXT_WAKE_TIME.set(None);
         std::thread::sleep(duration);
-        // Note: This demo works with our simplified JoinAll above, but it wouldn't
-        // work with futures::future::JoinAll, because we never call Waker::wake.
     }
 }
 

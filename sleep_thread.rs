@@ -1,3 +1,4 @@
+use futures::future;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
@@ -34,60 +35,13 @@ fn sleep(duration: Duration) -> SleepFuture {
 
 static X: AtomicU64 = AtomicU64::new(0);
 
-struct WorkFuture {
-    sleep_future: Pin<Box<SleepFuture>>,
+async fn work() {
+    sleep(Duration::from_secs(1)).await;
+    X.fetch_add(1, Relaxed);
 }
 
-impl Future for WorkFuture {
-    type Output = ();
-
-    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        if self.sleep_future.as_mut().poll(context).is_pending() {
-            Poll::Pending
-        } else {
-            X.fetch_add(1, Relaxed);
-            Poll::Ready(())
-        }
-    }
-}
-
-fn work() -> WorkFuture {
-    let sleep_future = sleep(Duration::from_secs(1));
-    WorkFuture {
-        sleep_future: Box::pin(sleep_future),
-    }
-}
-
-struct JoinAll<F> {
-    futures: Vec<Pin<Box<F>>>,
-}
-
-impl<F: Future> Future for JoinAll<F> {
-    type Output = ();
-
-    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        self.futures
-            .retain_mut(|future| future.as_mut().poll(context).is_pending());
-        if self.futures.is_empty() {
-            Poll::Ready(())
-        } else {
-            Poll::Pending
-        }
-    }
-}
-
-fn join_all<F: Future>(futures: Vec<F>) -> JoinAll<F> {
-    JoinAll {
-        futures: futures.into_iter().map(Box::pin).collect(),
-    }
-}
-
-fn lots_of_work() -> JoinAll<WorkFuture> {
-    let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
-    }
-    join_all(futures)
+async fn lots_of_work() {
+    future::join3(work(), work(), work()).await;
 }
 
 #[tokio::main]

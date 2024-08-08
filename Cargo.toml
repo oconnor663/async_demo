@@ -36,6 +36,22 @@ name = "tokio_blocking"
 path = "tokio_blocking.rs"
 
 [[bin]]
+name = "sleep_forever"
+path = "sleep_forever.rs"
+
+[[bin]]
+name = "sleep_busy"
+path = "sleep_busy.rs"
+
+[[bin]]
+name = "sleep_thread"
+path = "sleep_thread.rs"
+
+[[bin]]
+name = "sleep_tls"
+path = "sleep_tls.rs"
+
+[[bin]]
 name = "work"
 path = "work.rs"
 
@@ -44,24 +60,8 @@ name = "join"
 path = "join.rs"
 
 [[bin]]
-name = "sleep_forever"
-path = "sleep_forever.rs"
-
-[[bin]]
-name = "sleep_thread"
-path = "sleep_thread.rs"
-
-[[bin]]
-name = "sleep_busy"
-path = "sleep_busy.rs"
-
-[[bin]]
-name = "sleep_tls"
-path = "sleep_tls.rs"
-
-[[bin]]
-name = "tokio_timeout"
-path = "tokio_timeout.rs"
+name = "timeout"
+path = "timeout.rs"
 
 [dependencies]
 futures = "0.3.30"

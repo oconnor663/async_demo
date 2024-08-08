@@ -6,60 +6,54 @@ use std::time::{Duration, Instant};
 
 static X: AtomicU64 = AtomicU64::new(0);
 
-struct WorkFuture {
-    sleep_future: Pin<Box<tokio::time::Sleep>>,
+async fn work() {
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    X.fetch_add(1, Relaxed);
 }
 
-impl Future for WorkFuture {
+struct Join3<F1, F2, F3> {
+    f1: Pin<Box<F1>>,
+    f1_pending: bool,
+    f2: Pin<Box<F2>>,
+    f2_pending: bool,
+    f3: Pin<Box<F3>>,
+    f3_pending: bool,
+}
+
+impl<F1: Future, F2: Future, F3: Future> Future for Join3<F1, F2, F3> {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        if self.sleep_future.as_mut().poll(context).is_pending() {
+        if self.f1_pending {
+            self.f1_pending = self.f1.as_mut().poll(context).is_pending();
+        }
+        if self.f2_pending {
+            self.f2_pending = self.f2.as_mut().poll(context).is_pending();
+        }
+        if self.f3_pending {
+            self.f3_pending = self.f3.as_mut().poll(context).is_pending();
+        }
+        if self.f1_pending || self.f2_pending || self.f3_pending {
             Poll::Pending
         } else {
-            X.fetch_add(1, Relaxed);
             Poll::Ready(())
         }
     }
 }
 
-fn work() -> WorkFuture {
-    let sleep_future = tokio::time::sleep(Duration::from_secs(1));
-    WorkFuture {
-        sleep_future: Box::pin(sleep_future),
+fn join3<F1: Future, F2: Future, F3: Future>(f1: F1, f2: F2, f3: F3) -> Join3<F1, F2, F3> {
+    Join3 {
+        f1: Box::pin(f1),
+        f1_pending: true,
+        f2: Box::pin(f2),
+        f2_pending: true,
+        f3: Box::pin(f3),
+        f3_pending: true,
     }
 }
 
-struct JoinAll<F> {
-    futures: Vec<Pin<Box<F>>>,
-}
-
-impl<F: Future> Future for JoinAll<F> {
-    type Output = ();
-
-    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        self.futures
-            .retain_mut(|future| future.as_mut().poll(context).is_pending());
-        if self.futures.is_empty() {
-            Poll::Ready(())
-        } else {
-            Poll::Pending
-        }
-    }
-}
-
-fn join_all<F: Future>(futures: Vec<F>) -> JoinAll<F> {
-    JoinAll {
-        futures: futures.into_iter().map(Box::pin).collect(),
-    }
-}
-
-fn lots_of_work() -> JoinAll<WorkFuture> {
-    let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
-    }
-    join_all(futures)
+async fn lots_of_work() {
+    join3(work(), work(), work()).await;
 }
 
 #[tokio::main]

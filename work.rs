@@ -32,11 +32,7 @@ fn work() -> WorkFuture {
 }
 
 async fn lots_of_work() {
-    let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
-    }
-    future::join_all(futures).await;
+    future::join3(work(), work(), work()).await;
 }
 
 #[tokio::main]

@@ -1,4 +1,3 @@
-use futures::future;
 use rand::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -11,16 +10,9 @@ static X: AtomicU64 = AtomicU64::new(0);
 async fn work() {
     let mut rng = rand::thread_rng();
     let seconds = rng.gen_range(0.0..1.0);
+    println!("work time: {:.3} seconds", seconds);
     tokio::time::sleep(Duration::from_secs_f32(seconds)).await;
     X.fetch_add(1, Relaxed);
-}
-
-async fn lots_of_work() {
-    let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
-    }
-    future::join_all(futures).await;
 }
 
 struct Timeout<F> {
@@ -53,7 +45,7 @@ fn timeout<F: Future>(inner: F, duration: Duration) -> Timeout<F> {
 #[tokio::main]
 async fn main() {
     let start = Instant::now();
-    timeout(lots_of_work(), Duration::from_secs_f32(0.5)).await;
+    timeout(work(), Duration::from_secs_f32(0.5)).await;
     println!("X is {:?}", X);
     let seconds = (Instant::now() - start).as_secs_f32();
     println!("{:.3} seconds", seconds);
