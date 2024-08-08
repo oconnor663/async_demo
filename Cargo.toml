@@ -56,10 +56,6 @@ name = "sleep_tls"
 path = "sleep_tls.rs"
 
 [[bin]]
-name = "no_pin"
-path = "no_pin.rs"
-
-[[bin]]
 name = "tokio_timeout"
 path = "tokio_timeout.rs"
 
