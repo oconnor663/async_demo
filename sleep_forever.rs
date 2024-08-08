@@ -1,7 +1,7 @@
 use futures::future;
 use std::future::Future;
+use std::io::Write;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
@@ -13,8 +13,7 @@ impl Future for SleepFuture {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<()> {
-        let now = Instant::now();
-        if now >= self.wake_time {
+        if self.wake_time <= Instant::now() {
             Poll::Ready(())
         } else {
             Poll::Pending
@@ -27,22 +26,18 @@ fn sleep(duration: Duration) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
-static X: AtomicU64 = AtomicU64::new(0);
-
 async fn work() {
     sleep(Duration::from_secs(1)).await;
-    X.fetch_add(1, Relaxed);
-}
-
-async fn lots_of_work() {
-    future::join3(work(), work(), work()).await;
+    print!(".");
+    std::io::stdout().flush().unwrap();
 }
 
 #[tokio::main]
 async fn main() {
-    let start = Instant::now();
-    lots_of_work().await;
-    println!("X is {:?}", X);
-    let seconds = (Instant::now() - start).as_secs_f32();
-    println!("{:.3} seconds", seconds);
+    let mut futures = Vec::new();
+    for _ in 0..20_000 {
+        futures.push(work());
+    }
+    future::join_all(futures).await;
+    println!();
 }

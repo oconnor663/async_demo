@@ -1,18 +1,17 @@
+use futures::future;
 use rand::prelude::*;
 use std::future::Future;
+use std::io::Write;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 use std::task::{Context, Poll};
-use std::time::{Duration, Instant};
-
-static X: AtomicU64 = AtomicU64::new(0);
+use std::time::Duration;
 
 async fn work() {
     let mut rng = rand::thread_rng();
     let seconds = rng.gen_range(0.0..1.0);
-    println!("work time: {:.3} seconds", seconds);
     tokio::time::sleep(Duration::from_secs_f32(seconds)).await;
-    X.fetch_add(1, Relaxed);
+    print!(".");
+    std::io::stdout().flush().unwrap();
 }
 
 struct Timeout<F> {
@@ -44,9 +43,11 @@ fn timeout<F: Future>(inner: F, duration: Duration) -> Timeout<F> {
 
 #[tokio::main]
 async fn main() {
-    let start = Instant::now();
-    timeout(work(), Duration::from_secs_f32(0.5)).await;
-    println!("X is {:?}", X);
-    let seconds = (Instant::now() - start).as_secs_f32();
-    println!("{:.3} seconds", seconds);
+    let mut futures = Vec::new();
+    for _ in 0..20_000 {
+        futures.push(work());
+    }
+    let all = future::join_all(futures);
+    timeout(all, Duration::from_secs_f32(0.5)).await;
+    println!();
 }

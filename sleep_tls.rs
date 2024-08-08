@@ -1,14 +1,15 @@
 use futures::future;
 use futures::task::noop_waker_ref;
-use std::cell::Cell;
+use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::future::Future;
+use std::io::Write;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
-use std::task::{Context, Poll};
+use std::task::{Context, Poll, Waker};
 use std::time::{Duration, Instant};
 
 std::thread_local! {
-    static NEXT_WAKE_TIME: Cell<Option<Instant>> = Cell::new(None);
+    static WAKERS: RefCell<BTreeMap<Instant, Waker>> = RefCell::new(BTreeMap::new());
 }
 
 struct SleepFuture {
@@ -18,19 +19,13 @@ struct SleepFuture {
 impl Future for SleepFuture {
     type Output = ();
 
-    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<()> {
-        let now = Instant::now();
-        if now >= self.wake_time {
+    fn poll(self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
+        if self.wake_time <= Instant::now() {
             Poll::Ready(())
         } else {
-            let next = NEXT_WAKE_TIME.get();
-            if next.is_none() || self.wake_time < next.unwrap() {
-                NEXT_WAKE_TIME.set(Some(self.wake_time));
-            }
-            // Note: It's technically cheating to return Pending here without ever
-            // calling wake. It works in this demo because we know we have a no-op
-            // Context. But it doesn't work with combinators that substitute their
-            // own Context, like JoinAll, FuturesOrdered, or FuturesUnordered.
+            WAKERS.with_borrow_mut(|tree| {
+                tree.insert(self.wake_time, context.waker().clone());
+            });
             Poll::Pending
         }
     }
@@ -41,32 +36,32 @@ fn sleep(duration: Duration) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
-static X: AtomicU64 = AtomicU64::new(0);
-
 async fn work() {
     sleep(Duration::from_secs(1)).await;
-    X.fetch_add(1, Relaxed);
+    print!(".");
+    std::io::stdout().flush().unwrap();
 }
 
-async fn lots_of_work() {
-    future::join3(work(), work(), work()).await;
-}
-
-fn block_on(future: impl Future) {
-    let mut pinned = Box::pin(future);
-    let mut context = Context::from_waker(noop_waker_ref());
-    while pinned.as_mut().poll(&mut context).is_pending() {
-        let next = NEXT_WAKE_TIME.get().expect("someone must want a wakeup");
-        let duration = next.saturating_duration_since(Instant::now());
-        NEXT_WAKE_TIME.set(None);
-        std::thread::sleep(duration);
+#[tokio::main]
+async fn main() {
+    let mut futures = Vec::new();
+    for _ in 0..20_000 {
+        futures.push(work());
     }
-}
-
-fn main() {
-    let start = Instant::now();
-    block_on(lots_of_work());
-    println!("X is {:?}", X);
-    let seconds = (Instant::now() - start).as_secs_f32();
-    println!("{:.3} seconds", seconds);
+    let mut main_future = Box::pin(future::join_all(futures));
+    let mut context = Context::from_waker(noop_waker_ref());
+    while main_future.as_mut().poll(&mut context).is_pending() {
+        WAKERS.with_borrow_mut(|tree| {
+            while let Some((&wake_time, waker)) = tree.first_key_value() {
+                let now = Instant::now();
+                if wake_time <= now {
+                    waker.wake_by_ref();
+                    tree.pop_first();
+                } else {
+                    std::thread::sleep(wake_time.saturating_duration_since(now));
+                }
+            }
+        });
+    }
+    println!();
 }

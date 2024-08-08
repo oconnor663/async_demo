@@ -44,10 +44,6 @@ name = "sleep_busy"
 path = "sleep_busy.rs"
 
 [[bin]]
-name = "sleep_thread"
-path = "sleep_thread.rs"
-
-[[bin]]
 name = "sleep_tls"
 path = "sleep_tls.rs"
 

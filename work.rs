@@ -1,11 +1,9 @@
 use futures::future;
 use std::future::Future;
+use std::io::Write;
 use std::pin::Pin;
-use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 use std::task::{Context, Poll};
-use std::time::{Duration, Instant};
-
-static X: AtomicU64 = AtomicU64::new(0);
+use std::time::Duration;
 
 struct WorkFuture {
     sleep_future: Pin<Box<tokio::time::Sleep>>,
@@ -18,7 +16,8 @@ impl Future for WorkFuture {
         if self.sleep_future.as_mut().poll(context).is_pending() {
             Poll::Pending
         } else {
-            X.fetch_add(1, Relaxed);
+            print!(".");
+            std::io::stdout().flush().unwrap();
             Poll::Ready(())
         }
     }
@@ -31,15 +30,12 @@ fn work() -> WorkFuture {
     }
 }
 
-async fn lots_of_work() {
-    future::join3(work(), work(), work()).await;
-}
-
 #[tokio::main]
 async fn main() {
-    let start = Instant::now();
-    lots_of_work().await;
-    println!("X is {:?}", X);
-    let seconds = (Instant::now() - start).as_secs_f32();
-    println!("{:.3} seconds", seconds);
+    let mut futures = Vec::new();
+    for _ in 0..20_000 {
+        futures.push(work());
+    }
+    future::join_all(futures).await;
+    println!();
 }

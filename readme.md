@@ -1,21 +1,21 @@
 - regular program calling work() in series
 - use threads to make it parallel
-  - first with std::thread::spawn, then with rayon::join
+  - first with std::thread::spawn, then with rayon::scope
   - try spawning ~20k threads (~500 on the Playgroud)
-- Tokio version using futures::future::join
+- Tokio version using futures::future::join_all
   - using std::thread::sleep ruins the concurrency
   - this is how we know it was running on one thread before
   - this version scales to millions of jobs
 - write our own sleep
   - no wakeup hangs Tokio forever
   - spamming wake() works but burns the CPU
-  - wakeup threads fix Tokio but defeat the purpose
-  - use a thread local and custom block_on()
+  - use a thread local and a BTreeMap of wakers
+    - If the main loop is already awake, why do we need to call wake()? Because
+      futures::future::JoinAll substitutes its own context.
 - write our own work future
-- write our own join
+- write our own join_all
 - follow-up topics
   - timeout, cancellation
-  - futures::future::join_all creates its own Waker
   - tasks
   - Pin
   - real IO
