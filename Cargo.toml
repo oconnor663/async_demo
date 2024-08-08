@@ -8,16 +8,12 @@ name = "serial"
 path = "serial.rs"
 
 [[bin]]
-name = "tokio_serial"
-path = "tokio_serial.rs"
-
-[[bin]]
 name = "threads"
 path = "threads.rs"
 
 [[bin]]
-name = "tokio_join"
-path = "tokio_join.rs"
+name = "threads_100"
+path = "threads_100.rs"
 
 [[bin]]
 name = "threads_20k"
@@ -26,6 +22,10 @@ path = "threads_20k.rs"
 [[bin]]
 name = "rayon_20k"
 path = "rayon_20k.rs"
+
+[[bin]]
+name = "tokio_serial"
+path = "tokio_serial.rs"
 
 [[bin]]
 name = "tokio_20k"
