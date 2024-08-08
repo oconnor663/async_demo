@@ -10,6 +10,9 @@ async fn work() {
 
 #[tokio::main]
 async fn main() {
-    future::join3(work(), work(), work()).await;
+    let future1 = work();
+    let future2 = work();
+    let future3 = work();
+    future::join_all([future1, future2, future3]).await;
     println!();
 }
