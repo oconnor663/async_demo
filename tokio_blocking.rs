@@ -1,16 +1,27 @@
 use futures::future;
-use std::time::Duration;
+use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
+use std::time::{Duration, Instant};
 
-async fn work(name: &str, seconds: f32) {
-    let duration = Duration::from_secs_f32(seconds);
-    println!("{name}: start");
-    std::thread::sleep(duration / 2);
-    println!("{name}: middle");
-    std::thread::sleep(duration / 2);
-    println!("{name}: end");
+static X: AtomicU64 = AtomicU64::new(0);
+
+async fn work() {
+    std::thread::sleep(Duration::from_secs(1));
+    X.fetch_add(1, Relaxed);
+}
+
+async fn lots_of_work() {
+    let mut futures = Vec::new();
+    for _ in 0..20_000 {
+        futures.push(work());
+    }
+    future::join_all(futures).await;
 }
 
 #[tokio::main]
 async fn main() {
-    future::join(work("foo", 1.5), work("bar", 2.0)).await;
+    let start = Instant::now();
+    lots_of_work().await;
+    println!("X is {:?}", X);
+    let seconds = (Instant::now() - start).as_secs_f32();
+    println!("{:.3} seconds", seconds);
 }

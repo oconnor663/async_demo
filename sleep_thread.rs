@@ -1,6 +1,6 @@
-use futures::future;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
@@ -32,16 +32,69 @@ fn sleep(duration: Duration) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
-async fn work(name: &str, seconds: f32) {
-    let duration = Duration::from_secs_f32(seconds);
-    println!("{name}: start");
-    sleep(duration / 2).await;
-    println!("{name}: middle");
-    sleep(duration / 2).await;
-    println!("{name}: end");
+static X: AtomicU64 = AtomicU64::new(0);
+
+struct WorkFuture {
+    sleep_future: Pin<Box<SleepFuture>>,
+}
+
+impl Future for WorkFuture {
+    type Output = ();
+
+    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
+        if self.sleep_future.as_mut().poll(context).is_pending() {
+            Poll::Pending
+        } else {
+            X.fetch_add(1, Relaxed);
+            Poll::Ready(())
+        }
+    }
+}
+
+fn work() -> WorkFuture {
+    let sleep_future = sleep(Duration::from_secs(1));
+    WorkFuture {
+        sleep_future: Box::pin(sleep_future),
+    }
+}
+
+struct JoinAll<F> {
+    futures: Vec<Pin<Box<F>>>,
+}
+
+impl<F: Future> Future for JoinAll<F> {
+    type Output = ();
+
+    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
+        self.futures
+            .retain_mut(|future| future.as_mut().poll(context).is_pending());
+        if self.futures.is_empty() {
+            Poll::Ready(())
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
+fn join_all<F: Future>(futures: Vec<F>) -> JoinAll<F> {
+    JoinAll {
+        futures: futures.into_iter().map(Box::pin).collect(),
+    }
+}
+
+fn lots_of_work() -> JoinAll<WorkFuture> {
+    let mut futures = Vec::new();
+    for _ in 0..20_000 {
+        futures.push(work());
+    }
+    join_all(futures)
 }
 
 #[tokio::main]
 async fn main() {
-    future::join(work("foo", 1.5), work("bar", 2.0)).await;
+    let start = Instant::now();
+    lots_of_work().await;
+    println!("X is {:?}", X);
+    let seconds = (Instant::now() - start).as_secs_f32();
+    println!("{:.3} seconds", seconds);
 }

@@ -1,14 +1,25 @@
-use std::time::Duration;
+use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
+use std::time::{Duration, Instant};
 
-fn work(name: &str, seconds: f32) {
-    let duration = Duration::from_secs_f32(seconds);
-    println!("{name}: start");
-    std::thread::sleep(duration / 2);
-    println!("{name}: middle");
-    std::thread::sleep(duration / 2);
-    println!("{name}: end");
+static X: AtomicU64 = AtomicU64::new(0);
+
+fn work() {
+    std::thread::sleep(Duration::from_secs(1));
+    X.fetch_add(1, Relaxed);
+}
+
+fn lots_of_work() {
+    rayon::scope(|scope| {
+        for _ in 0..20_000 {
+            scope.spawn(|_| work());
+        }
+    });
 }
 
 fn main() {
-    rayon::join(|| work("foo", 1.5), || work("bar", 2.0));
+    let start = Instant::now();
+    lots_of_work();
+    println!("X is {:?}", X);
+    let seconds = (Instant::now() - start).as_secs_f32();
+    println!("{:.3} seconds", seconds);
 }

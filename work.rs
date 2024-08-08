@@ -1,60 +1,49 @@
 use futures::future;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
 use std::task::{Context, Poll};
-use std::time::Duration;
+use std::time::{Duration, Instant};
+
+static X: AtomicU64 = AtomicU64::new(0);
 
 struct WorkFuture {
-    name: String,
-    duration: Duration,
-    state: WorkState,
-}
-
-enum WorkState {
-    Start,
-    FirstSleep(Pin<Box<tokio::time::Sleep>>),
-    SecondSleep(Pin<Box<tokio::time::Sleep>>),
-    End,
+    sleep_future: Pin<Box<tokio::time::Sleep>>,
 }
 
 impl Future for WorkFuture {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        if let WorkState::Start = self.state {
-            println!("{} start", self.name);
-            let sleep_future = tokio::time::sleep(self.duration / 2);
-            self.state = WorkState::FirstSleep(Box::pin(sleep_future));
+        if self.sleep_future.as_mut().poll(context).is_pending() {
+            Poll::Pending
+        } else {
+            X.fetch_add(1, Relaxed);
+            Poll::Ready(())
         }
-        if let WorkState::FirstSleep(sleep_future) = &mut self.state {
-            if sleep_future.as_mut().poll(context).is_pending() {
-                return Poll::Pending;
-            }
-            println!("{} middle", self.name);
-            let sleep_future = tokio::time::sleep(self.duration / 2);
-            self.state = WorkState::SecondSleep(Box::pin(sleep_future));
-        }
-        if let WorkState::SecondSleep(sleep_future) = &mut self.state {
-            if sleep_future.as_mut().poll(context).is_pending() {
-                return Poll::Pending;
-            }
-            println!("{} end", self.name);
-            self.state = WorkState::End;
-            return Poll::Ready(());
-        }
-        unreachable!("polled again after Ready");
     }
 }
 
-fn work(name: &str, seconds: f32) -> WorkFuture {
+fn work() -> WorkFuture {
+    let sleep_future = tokio::time::sleep(Duration::from_secs(1));
     WorkFuture {
-        name: String::from(name),
-        duration: Duration::from_secs_f32(seconds),
-        state: WorkState::Start,
+        sleep_future: Box::pin(sleep_future),
     }
+}
+
+async fn lots_of_work() {
+    let mut futures = Vec::new();
+    for _ in 0..20_000 {
+        futures.push(work());
+    }
+    future::join_all(futures).await;
 }
 
 #[tokio::main]
 async fn main() {
-    future::join(work("foo", 1.5), work("bar", 2.0)).await;
+    let start = Instant::now();
+    lots_of_work().await;
+    println!("X is {:?}", X);
+    let seconds = (Instant::now() - start).as_secs_f32();
+    println!("{:.3} seconds", seconds);
 }

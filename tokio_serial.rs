@@ -1,16 +1,24 @@
-use std::time::Duration;
+use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
+use std::time::{Duration, Instant};
 
-async fn work(name: &str, seconds: f32) {
-    let duration = Duration::from_secs_f32(seconds);
-    println!("{name}: start");
-    tokio::time::sleep(duration / 2).await;
-    println!("{name}: middle");
-    tokio::time::sleep(duration / 2).await;
-    println!("{name}: end");
+static X: AtomicU64 = AtomicU64::new(0);
+
+async fn work() {
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    X.fetch_add(1, Relaxed);
+}
+
+async fn lots_of_work() {
+    work().await;
+    work().await;
+    work().await;
 }
 
 #[tokio::main]
 async fn main() {
-    work("foo", 1.5).await;
-    work("bar", 2.0).await;
+    let start = Instant::now();
+    lots_of_work().await;
+    println!("X is {:?}", X);
+    let seconds = (Instant::now() - start).as_secs_f32();
+    println!("{:.3} seconds", seconds);
 }

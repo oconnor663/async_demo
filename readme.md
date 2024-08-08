@@ -18,6 +18,8 @@
 - write our own join
 - change join() to first(), cancellation
 - follow-up topics
+  - cancellation
+  - futures::future::join_all creates its own Waker
   - tasks
   - Pin
   - real IO

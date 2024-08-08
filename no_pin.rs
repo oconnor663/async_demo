@@ -1,8 +1,20 @@
-use std::future::Future;
-use std::pin::Pin;
+use std::cell::Cell;
 use std::sync::atomic::{AtomicU64, Ordering::Relaxed};
-use std::task::{Context, Poll};
+use std::task::Poll;
 use std::time::{Duration, Instant};
+
+trait Future {
+    type Output;
+
+    // Get rid of Pin and use an empty Context.
+    fn poll(&mut self, context: &mut Context) -> Poll<()>;
+}
+
+struct Context {}
+
+std::thread_local! {
+    static NEXT_WAKE_TIME: Cell<Option<Instant>> = Cell::new(None);
+}
 
 struct SleepFuture {
     wake_time: Instant,
@@ -11,11 +23,15 @@ struct SleepFuture {
 impl Future for SleepFuture {
     type Output = ();
 
-    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<()> {
+    fn poll(&mut self, _: &mut Context) -> Poll<()> {
         let now = Instant::now();
         if now >= self.wake_time {
             Poll::Ready(())
         } else {
+            let next = NEXT_WAKE_TIME.get();
+            if next.is_none() || self.wake_time < next.unwrap() {
+                NEXT_WAKE_TIME.set(Some(self.wake_time));
+            }
             Poll::Pending
         }
     }
@@ -29,14 +45,14 @@ fn sleep(duration: Duration) -> SleepFuture {
 static X: AtomicU64 = AtomicU64::new(0);
 
 struct WorkFuture {
-    sleep_future: Pin<Box<SleepFuture>>,
+    sleep_future: SleepFuture,
 }
 
 impl Future for WorkFuture {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        if self.sleep_future.as_mut().poll(context).is_pending() {
+    fn poll(&mut self, context: &mut Context) -> Poll<()> {
+        if self.sleep_future.poll(context).is_pending() {
             Poll::Pending
         } else {
             X.fetch_add(1, Relaxed);
@@ -47,21 +63,19 @@ impl Future for WorkFuture {
 
 fn work() -> WorkFuture {
     let sleep_future = sleep(Duration::from_secs(1));
-    WorkFuture {
-        sleep_future: Box::pin(sleep_future),
-    }
+    WorkFuture { sleep_future }
 }
 
 struct JoinAll<F> {
-    futures: Vec<Pin<Box<F>>>,
+    futures: Vec<F>,
 }
 
 impl<F: Future> Future for JoinAll<F> {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
+    fn poll(&mut self, context: &mut Context) -> Poll<()> {
         self.futures
-            .retain_mut(|future| future.as_mut().poll(context).is_pending());
+            .retain_mut(|future| future.poll(context).is_pending());
         if self.futures.is_empty() {
             Poll::Ready(())
         } else {
@@ -71,9 +85,7 @@ impl<F: Future> Future for JoinAll<F> {
 }
 
 fn join_all<F: Future>(futures: Vec<F>) -> JoinAll<F> {
-    JoinAll {
-        futures: futures.into_iter().map(Box::pin).collect(),
-    }
+    JoinAll { futures }
 }
 
 fn lots_of_work() -> JoinAll<WorkFuture> {
@@ -84,10 +96,20 @@ fn lots_of_work() -> JoinAll<WorkFuture> {
     join_all(futures)
 }
 
-#[tokio::main]
-async fn main() {
+fn block_on(mut future: impl Future) {
+    while future.poll(&mut Context {}).is_pending() {
+        let next = NEXT_WAKE_TIME.get().expect("someone must want a wakeup");
+        let duration = next.saturating_duration_since(Instant::now());
+        NEXT_WAKE_TIME.set(None);
+        std::thread::sleep(duration);
+        // Note: This demo works with our simplified JoinAll above, but it wouldn't
+        // work with futures::future::JoinAll, because we never call Waker::wake.
+    }
+}
+
+fn main() {
     let start = Instant::now();
-    lots_of_work().await;
+    block_on(lots_of_work());
     println!("X is {:?}", X);
     let seconds = (Instant::now() - start).as_secs_f32();
     println!("{:.3} seconds", seconds);

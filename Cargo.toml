@@ -12,28 +12,16 @@ name = "threads"
 path = "threads.rs"
 
 [[bin]]
-name = "rayon"
-path = "rayon.rs"
-
-[[bin]]
 name = "threads_20k"
 path = "threads_20k.rs"
 
 [[bin]]
-name = "rayon_20k"
-path = "rayon_20k.rs"
+name = "rayon"
+path = "rayon.rs"
 
 [[bin]]
 name = "tokio_serial"
 path = "tokio_serial.rs"
-
-[[bin]]
-name = "tokio_tasks"
-path = "tokio_tasks.rs"
-
-[[bin]]
-name = "tokio_join"
-path = "tokio_join.rs"
 
 [[bin]]
 name = "tokio_20k"
@@ -44,22 +32,6 @@ name = "tokio_blocking"
 path = "tokio_blocking.rs"
 
 [[bin]]
-name = "sleep_forever"
-path = "sleep_forever.rs"
-
-[[bin]]
-name = "sleep_thread"
-path = "sleep_thread.rs"
-
-[[bin]]
-name = "busy"
-path = "busy.rs"
-
-[[bin]]
-name = "sleepy"
-path = "sleepy.rs"
-
-[[bin]]
 name = "work"
 path = "work.rs"
 
@@ -68,12 +40,24 @@ name = "join"
 path = "join.rs"
 
 [[bin]]
-name = "first"
-path = "first.rs"
+name = "sleep_forever"
+path = "sleep_forever.rs"
 
 [[bin]]
-name = "combo"
-path = "combo.rs"
+name = "sleep_thread"
+path = "sleep_thread.rs"
+
+[[bin]]
+name = "sleep_busy"
+path = "sleep_busy.rs"
+
+[[bin]]
+name = "sleep_tls"
+path = "sleep_tls.rs"
+
+[[bin]]
+name = "no_pin"
+path = "no_pin.rs"
 
 [dependencies]
 futures = "0.3.30"
