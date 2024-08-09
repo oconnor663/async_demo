@@ -18,15 +18,11 @@ struct SleepFuture {
 impl Future for SleepFuture {
     type Output = ();
 
-    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<()> {
+    fn poll(self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
         if self.wake_time <= Instant::now() {
             Poll::Ready(())
         } else {
-            let next = NEXT_WAKE_TIME.get();
-            if next.is_none() || self.wake_time < next.unwrap() {
-                NEXT_WAKE_TIME.set(Some(self.wake_time));
-            }
-            // HACK: We're returning Pending without ever calling wake(). See below.
+            context.waker().wake_by_ref();
             Poll::Pending
         }
     }
@@ -45,20 +41,13 @@ async fn work() {
 
 fn main() {
     let mut futures = Vec::new();
-    // HACK: Because we never call wake() above, this works for 30 futures but not 31!
-    // https://docs.rs/futures/0.3.30/futures/future/fn.join_all.html#see-also
-    for _ in 0..30 {
+    for _ in 0..20_000 {
         futures.push(work());
     }
     let mut main_future = Box::pin(future::join_all(futures));
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
-        let next = NEXT_WAKE_TIME
-            .get()
-            .expect("poll returned Pending, so there must be a wake time");
-        let sleep_duration = next.saturating_duration_since(Instant::now());
-        NEXT_WAKE_TIME.set(None);
-        std::thread::sleep(sleep_duration);
+        // Busy loop!
     }
     println!();
 }

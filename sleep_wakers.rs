@@ -44,8 +44,7 @@ async fn work() {
     std::io::stdout().flush().unwrap();
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let mut futures = Vec::new();
     for _ in 0..20_000 {
         futures.push(work());
