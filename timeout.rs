@@ -1,16 +1,13 @@
 use futures::future;
-use rand::prelude::*;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
 
-async fn work() {
-    let mut rng = rand::thread_rng();
-    let seconds = rng.gen_range(0.0..1.0);
-    tokio::time::sleep(Duration::from_secs_f32(seconds)).await;
-    print!(".");
+async fn work(n: u64) {
+    tokio::time::sleep(Duration::from_millis(n)).await;
+    print!("{n} ");
     std::io::stdout().flush().unwrap();
 }
 
@@ -44,10 +41,10 @@ fn timeout<F: Future>(inner: F, duration: Duration) -> Timeout<F> {
 #[tokio::main]
 async fn main() {
     let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
+    for n in 1..=20_000 {
+        futures.push(work(n));
     }
     let all = future::join_all(futures);
-    timeout(all, Duration::from_secs_f32(0.5)).await;
+    timeout(all, Duration::from_secs(1)).await;
     println!();
 }

@@ -27,17 +27,17 @@ fn sleep(duration: Duration) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
-async fn work() {
+async fn work(n: u64) {
     sleep(Duration::from_secs(1)).await;
-    print!(".");
+    print!("{n} ");
     std::io::stdout().flush().unwrap();
 }
 
 #[tokio::main]
 async fn main() {
     let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
+    for n in 1..=20_000 {
+        futures.push(work(n));
     }
     future::join_all(futures).await;
     println!();

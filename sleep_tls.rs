@@ -37,9 +37,9 @@ fn sleep(duration: Duration) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
-async fn work() {
+async fn work(n: u64) {
     sleep(Duration::from_secs(1)).await;
-    print!(".");
+    print!("{n} ");
     std::io::stdout().flush().unwrap();
 }
 
@@ -47,8 +47,8 @@ fn main() {
     let mut futures = Vec::new();
     // HACK: Because we never call wake() above, this works for 30 futures but not 31!
     // https://docs.rs/futures/0.3.30/futures/future/fn.join_all.html#see-also
-    for _ in 0..30 {
-        futures.push(work());
+    for n in 1..=20_000 {
+        futures.push(work(n));
     }
     let mut main_future = Box::pin(future::join_all(futures));
     let mut context = Context::from_waker(noop_waker_ref());

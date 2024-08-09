@@ -4,9 +4,9 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
 
-async fn work() {
+async fn work(n: u64) {
     tokio::time::sleep(Duration::from_secs(1)).await;
-    print!(".");
+    print!("{n} ");
     std::io::stdout().flush().unwrap();
 }
 
@@ -37,8 +37,8 @@ fn join_all<F: Future>(futures: Vec<F>) -> JoinAll<F> {
 #[tokio::main]
 async fn main() {
     let mut futures = Vec::new();
-    for _ in 0..20_000 {
-        futures.push(work());
+    for n in 1..=20_000 {
+        futures.push(work(n));
     }
     join_all(futures).await;
     println!();
