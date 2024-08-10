@@ -1,6 +1,5 @@
 use futures::future;
 use std::future::Future;
-use std::io::Write;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
@@ -28,8 +27,7 @@ fn sleep(duration: Duration) -> SleepFuture {
 
 async fn work(n: u64) {
     sleep(Duration::from_secs(1)).await;
-    print!("{n} ");
-    std::io::stdout().flush().unwrap();
+    println!("{n}");
 }
 
 #[tokio::main]
@@ -39,5 +37,4 @@ async fn main() {
         futures.push(work(n));
     }
     future::join_all(futures).await;
-    println!();
 }

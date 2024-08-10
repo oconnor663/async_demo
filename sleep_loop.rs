@@ -1,7 +1,6 @@
 use futures::future;
 use futures::task::noop_waker_ref;
 use std::future::Future;
-use std::io::Write;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
@@ -30,8 +29,7 @@ fn sleep(duration: Duration) -> SleepFuture {
 
 async fn work(n: u64) {
     sleep(Duration::from_secs(1)).await;
-    print!("{n} ");
-    std::io::stdout().flush().unwrap();
+    println!("{n}");
 }
 
 fn main() {
@@ -44,5 +42,4 @@ fn main() {
     while main_future.as_mut().poll(&mut context).is_pending() {
         // Busy loop!
     }
-    println!();
 }

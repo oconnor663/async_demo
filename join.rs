@@ -1,13 +1,11 @@
 use std::future::Future;
-use std::io::Write;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
 
 async fn work(n: u64) {
     tokio::time::sleep(Duration::from_secs(1)).await;
-    print!("{n} ");
-    std::io::stdout().flush().unwrap();
+    println!("{n}");
 }
 
 struct JoinAll<F> {
@@ -41,5 +39,4 @@ async fn main() {
         futures.push(work(n));
     }
     join_all(futures).await;
-    println!();
 }
