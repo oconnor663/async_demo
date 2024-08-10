@@ -26,7 +26,7 @@ impl Future for SleepFuture {
             if next.is_none() || self.wake_time < next.unwrap() {
                 NEXT_WAKE_TIME.set(Some(self.wake_time));
             }
-            // HACK: We're returning Pending without ever calling wake(). See below.
+            // OOPS: We're returning Pending without ever calling wake(). See below.
             Poll::Pending
         }
     }
@@ -45,9 +45,9 @@ async fn work(n: u64) {
 
 fn main() {
     let mut futures = Vec::new();
-    // HACK: Because we never call wake() above, this works for 30 futures but not 31!
+    // OOPS: Because we never call wake() above, this works for 30 futures but not 31!
     // https://docs.rs/futures/0.3.30/futures/future/fn.join_all.html#see-also
-    for n in 1..=20_000 {
+    for n in 1..=30 {
         futures.push(work(n));
     }
     let mut main_future = Box::pin(future::join_all(futures));
