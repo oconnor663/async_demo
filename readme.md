@@ -17,5 +17,6 @@
 - follow-up topics
   - timeout, cancellation
   - tasks
+  - recursion
   - Pin
   - real IO
