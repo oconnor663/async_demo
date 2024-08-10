@@ -1,15 +1,10 @@
 use futures::future;
 use futures::task::noop_waker_ref;
-use std::cell::Cell;
 use std::future::Future;
 use std::io::Write;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
-
-std::thread_local! {
-    static NEXT_WAKE_TIME: Cell<Option<Instant>> = Cell::new(None);
-}
 
 struct SleepFuture {
     wake_time: Instant,
