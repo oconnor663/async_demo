@@ -76,6 +76,10 @@ name = "tokio_tasks"
 path = "tokio_tasks.rs"
 
 [[bin]]
+name = "tokio_tasks_blocking"
+path = "tokio_tasks_blocking.rs"
+
+[[bin]]
 name = "recursion"
 path = "recursion.rs"
 
