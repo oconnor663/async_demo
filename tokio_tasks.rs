@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-async fn work(n: u64) {
+async fn job(n: u64) {
     tokio::time::sleep(Duration::from_secs(1)).await;
     println!("{n}");
 }
@@ -9,7 +9,7 @@ async fn work(n: u64) {
 async fn main() {
     let mut tasks = Vec::new();
     for n in 1..=20_000 {
-        tasks.push(tokio::task::spawn(work(n)));
+        tasks.push(tokio::task::spawn(job(n)));
     }
     for task in tasks {
         task.await.unwrap();

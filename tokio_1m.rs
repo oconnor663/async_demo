@@ -1,7 +1,7 @@
 use futures::future;
 use std::time::Duration;
 
-async fn work(n: u64) {
+async fn job(n: u64) {
     tokio::time::sleep(Duration::from_secs(1)).await;
     println!("{n}");
 }
@@ -10,7 +10,7 @@ async fn work(n: u64) {
 async fn main() {
     let mut futures = Vec::new();
     for n in 1..=1_000_000 {
-        futures.push(work(n));
+        futures.push(job(n));
     }
     future::join_all(futures).await;
 }

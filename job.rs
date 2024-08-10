@@ -22,7 +22,7 @@ impl Future for WorkFuture {
     }
 }
 
-fn work(n: u64) -> WorkFuture {
+fn job(n: u64) -> WorkFuture {
     let sleep_future = Box::pin(tokio::time::sleep(Duration::from_secs(1)));
     WorkFuture { sleep_future, n }
 }
@@ -31,7 +31,7 @@ fn work(n: u64) -> WorkFuture {
 async fn main() {
     let mut futures = Vec::new();
     for n in 1..=20_000 {
-        futures.push(work(n));
+        futures.push(job(n));
     }
     future::join_all(futures).await;
 }

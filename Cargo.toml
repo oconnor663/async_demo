@@ -40,8 +40,8 @@ name = "tokio_blocking"
 path = "tokio_blocking.rs"
 
 [[bin]]
-name = "work"
-path = "work.rs"
+name = "job"
+path = "job.rs"
 
 [[bin]]
 name = "join"

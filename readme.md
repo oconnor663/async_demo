@@ -1,4 +1,4 @@
-- regular program calling work() in series
+- regular program calling job() in series
 - use threads to make it parallel
   - first with std::thread::spawn, then with rayon::scope
   - try spawning ~20k threads (~500 on the Playgroud)
@@ -12,7 +12,7 @@
   - use a thread local and a BTreeMap of wakers
     - If the main loop is already awake, why do we need to call wake()? Because
       futures::future::JoinAll substitutes its own context.
-- write our own work future
+- write our own job future
 - write our own join_all
 - follow-up topics
   - timeout, cancellation
