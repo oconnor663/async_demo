@@ -56,6 +56,14 @@ name = "sleep_busy"
 path = "sleep_busy.rs"
 
 [[bin]]
+name = "sleep_many_threads"
+path = "sleep_many_threads.rs"
+
+[[bin]]
+name = "sleep_one_thread"
+path = "sleep_one_thread.rs"
+
+[[bin]]
 name = "sleep_loop"
 path = "sleep_loop.rs"
 
@@ -88,6 +96,7 @@ name = "factorial"
 path = "factorial.rs"
 
 [dependencies]
+crossbeam-channel = "0.5.13"
 futures = "0.3.30"
 rayon = "1.10.0"
 tokio = { version = "1.39.2", features = ["full"] }
