@@ -23,9 +23,8 @@ impl Future for SleepFuture {
             Poll::Ready(())
         } else {
             WAKERS.with_borrow_mut(|tree| {
-                tree.entry(self.wake_time)
-                    .or_default()
-                    .push(context.waker().clone());
+                let wakers_vec = tree.entry(self.wake_time).or_default();
+                wakers_vec.push(context.waker().clone());
             });
             Poll::Pending
         }
@@ -51,14 +50,11 @@ fn main() {
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
         WAKERS.with_borrow_mut(|tree| {
-            let (first_wake_time, _) = tree
-                .first_key_value()
-                .expect("poll returned Pending, so there must be a Waker");
+            let first_wake_time = *tree.first_entry().expect("sleep forever?").key();
             std::thread::sleep(first_wake_time.saturating_duration_since(Instant::now()));
-            while let Some((&wake_time, wakers)) = tree.first_key_value() {
-                if wake_time <= Instant::now() {
-                    wakers.iter().for_each(Waker::wake_by_ref);
-                    tree.pop_first();
+            while let Some(entry) = tree.first_entry() {
+                if *entry.key() <= Instant::now() {
+                    entry.remove().into_iter().for_each(Waker::wake);
                 } else {
                     break;
                 }
