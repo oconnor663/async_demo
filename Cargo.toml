@@ -68,12 +68,20 @@ name = "sleep_loop"
 path = "sleep_loop.rs"
 
 [[bin]]
-name = "sleep_tls"
-path = "sleep_tls.rs"
+name = "sleep_time"
+path = "sleep_time.rs"
+
+[[bin]]
+name = "sleep_time_tls"
+path = "sleep_time_tls.rs"
 
 [[bin]]
 name = "sleep_wakers"
 path = "sleep_wakers.rs"
+
+[[bin]]
+name = "sleep_wakers_tls"
+path = "sleep_wakers_tls.rs"
 
 [[bin]]
 name = "timeout"

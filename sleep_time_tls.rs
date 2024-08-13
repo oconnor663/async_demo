@@ -51,10 +51,12 @@ fn main() {
     let mut main_future = Box::pin(future::join_all(futures));
     let mut context = Context::from_waker(noop_waker_ref());
     while main_future.as_mut().poll(&mut context).is_pending() {
+        dbg!(NEXT_WAKE_TIME.get().is_some());
         let next = NEXT_WAKE_TIME
             .get()
-            .expect("poll returned Pending, so there must be a wake time");
+            .expect("OOPS! JoinAll won't poll our sleeps again if they don't wake().");
         let sleep_duration = next.saturating_duration_since(Instant::now());
+        dbg!(sleep_duration);
         NEXT_WAKE_TIME.set(None);
         std::thread::sleep(sleep_duration);
     }
