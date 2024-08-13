@@ -4,12 +4,12 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
 
-struct WorkFuture {
+struct JobFuture {
     sleep_future: Pin<Box<tokio::time::Sleep>>,
     n: u64,
 }
 
-impl Future for WorkFuture {
+impl Future for JobFuture {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
@@ -22,9 +22,12 @@ impl Future for WorkFuture {
     }
 }
 
-fn job(n: u64) -> WorkFuture {
-    let sleep_future = Box::pin(tokio::time::sleep(Duration::from_secs(1)));
-    WorkFuture { sleep_future, n }
+fn job(n: u64) -> JobFuture {
+    let sleep_future = tokio::time::sleep(Duration::from_secs(1));
+    JobFuture {
+        sleep_future: Box::pin(sleep_future),
+        n,
+    }
 }
 
 #[tokio::main]

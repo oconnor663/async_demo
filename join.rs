@@ -8,15 +8,17 @@ async fn job(n: u64) {
     println!("{n}");
 }
 
-struct JoinAll<F> {
+struct JoinFuture<F> {
     futures: Vec<Pin<Box<F>>>,
 }
 
-impl<F: Future> Future for JoinAll<F> {
+impl<F: Future> Future for JoinFuture<F> {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<()> {
-        let is_pending = |f: &mut Pin<Box<F>>| f.as_mut().poll(context).is_pending();
+        let is_pending = |future: &mut Pin<Box<F>>| {
+            future.as_mut().poll(context).is_pending()
+        };
         self.futures.retain_mut(is_pending);
         if self.futures.is_empty() {
             Poll::Ready(())
@@ -26,8 +28,8 @@ impl<F: Future> Future for JoinAll<F> {
     }
 }
 
-fn join_all<F: Future>(futures: Vec<F>) -> JoinAll<F> {
-    JoinAll {
+fn join_all<F: Future>(futures: Vec<F>) -> JoinFuture<F> {
+    JoinFuture {
         futures: futures.into_iter().map(Box::pin).collect(),
     }
 }
