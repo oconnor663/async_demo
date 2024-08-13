@@ -16,20 +16,20 @@ name = "threads_100"
 path = "threads_100.rs"
 
 [[bin]]
-name = "threads_20k"
-path = "threads_20k.rs"
+name = "threads_1k"
+path = "threads_1k.rs"
 
 [[bin]]
-name = "rayon_20k"
-path = "rayon_20k.rs"
+name = "rayon_1k"
+path = "rayon_1k.rs"
 
 [[bin]]
 name = "tokio_serial"
 path = "tokio_serial.rs"
 
 [[bin]]
-name = "tokio_20k"
-path = "tokio_20k.rs"
+name = "tokio_1k"
+path = "tokio_1k.rs"
 
 [[bin]]
 name = "tokio_1m"

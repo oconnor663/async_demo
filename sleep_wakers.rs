@@ -40,7 +40,7 @@ async fn job(n: u64) {
 
 fn main() {
     let mut futures = Vec::new();
-    for n in 1..=20_000 {
+    for n in 1..=1_000 {
         futures.push(job(n));
     }
     let mut main_future = Box::pin(future::join_all(futures));

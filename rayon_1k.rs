@@ -7,7 +7,7 @@ fn job(n: u64) {
 
 fn main() {
     rayon::scope(|scope| {
-        for n in 1..=20_000 {
+        for n in 1..=1_000 {
             scope.spawn(move |_| job(n));
         }
     });

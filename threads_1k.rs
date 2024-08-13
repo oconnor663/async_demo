@@ -7,7 +7,7 @@ fn job(n: u64) {
 
 fn main() {
     let mut threads = Vec::new();
-    for n in 1..=20_000 {
+    for n in 1..=1_000 {
         threads.push(std::thread::spawn(move || job(n)));
     }
     for thread in threads {

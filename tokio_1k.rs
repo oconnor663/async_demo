@@ -9,7 +9,7 @@ async fn job(n: u64) {
 #[tokio::main]
 async fn main() {
     let mut futures = Vec::new();
-    for n in 1..=20_000 {
+    for n in 1..=1_000 {
         futures.push(job(n));
     }
     future::join_all(futures).await;

@@ -37,7 +37,7 @@ fn join_all<F: Future>(futures: Vec<F>) -> JoinFuture<F> {
 #[tokio::main]
 async fn main() {
     let mut futures = Vec::new();
-    for n in 1..=20_000 {
+    for n in 1..=1_000 {
         futures.push(job(n));
     }
     join_all(futures).await;

@@ -8,7 +8,7 @@ async fn job(n: u64) {
 #[tokio::main]
 async fn main() {
     let mut tasks = Vec::new();
-    for n in 1..=20_000 {
+    for n in 1..=1_000 {
         tasks.push(tokio::task::spawn(job(n)));
     }
     for task in tasks {
