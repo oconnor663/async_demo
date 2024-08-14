@@ -36,21 +36,25 @@ fn sleep(duration: Duration) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
+fn spawn_task<F: Future<Output = ()> + Send + 'static>(future: F) {
+    TASK_SENDER.get().unwrap().send(Box::pin(future)).unwrap();
+}
+
 async fn job(n: u64) {
     sleep(Duration::from_secs(1)).await;
     println!("finished job {n}");
 }
 
-async fn many_jobs() {
-    for n in 0..10 {
+async fn async_main() {
+    println!("Spawn 10 tasks in 2 seconds and wait for all of them to finish.\n");
+    for n in 1..=10 {
         spawn_task(job(n));
         println!("started job {n}");
         sleep(Duration::from_millis(200)).await;
     }
-}
-
-fn spawn_task<F: Future<Output = ()> + Send + 'static>(future: F) {
-    TASK_SENDER.get().unwrap().send(Box::pin(future)).unwrap();
+    // NOTE: Tokio exits when the main task is finished, so we need to collect task
+    // handles and await them. Our implementation below continues until all tasks
+    // are finished, so we don't need to collect (or implement) task handles.
 }
 
 fn main() {
@@ -59,7 +63,7 @@ fn main() {
     let mut context = Context::from_waker(noop_waker_ref());
     println!("Start with one task (many_jobs), which spawns");
     println!("ten other tasks (job) in two seconds.\n");
-    let mut tasks: Vec<BoxedFuture> = vec![Box::pin(many_jobs())];
+    let mut tasks: Vec<BoxedFuture> = vec![Box::pin(async_main())];
     loop {
         // Poll all existing tasks, removing any that are finished.
         let is_pending = |task: &mut BoxedFuture| task.as_mut().poll(&mut context).is_pending();
