@@ -7,8 +7,10 @@ use std::sync::{Mutex, OnceLock};
 use std::task::{Context, Poll, Waker};
 use std::time::{Duration, Instant};
 
-static TASK_SENDER: OnceLock<Sender<Pin<Box<dyn Future<Output = ()> + Send>>>> = OnceLock::new();
+static TASK_SENDER: OnceLock<Sender<BoxedFuture>> = OnceLock::new();
 static WAKERS: Mutex<BTreeMap<Instant, Vec<Waker>>> = Mutex::new(BTreeMap::new());
+
+type BoxedFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
 
 struct SleepFuture {
     wake_time: Instant,
@@ -34,20 +36,17 @@ fn sleep(duration: Duration) -> SleepFuture {
     SleepFuture { wake_time }
 }
 
-// `spawn_task` needs the `job` future to be `Send`, and unfortunately
-// current compiler limitations mean we can't do that if `job` is an
-// `async fn`. We have to use this Box + async block workaround.
-// See: https://rust-lang.github.io/async-book/07_workarounds/04_recursion.html
-fn job(n: u64) -> Pin<Box<dyn Future<Output = ()> + Send>> {
-    Box::pin(async move {
-        sleep(Duration::from_secs_f32(0.1)).await;
-        println!("{n}");
-        // Flip a coin, and if it's heads, spawn two more tasks.
-        if rand::random() {
-            spawn_task(job(n + 1));
-            spawn_task(job(n + 1));
-        }
-    })
+async fn job(n: u64) {
+    sleep(Duration::from_secs(1)).await;
+    println!("finished job {n}");
+}
+
+async fn many_jobs() {
+    for n in 0..10 {
+        spawn_task(job(n));
+        println!("started job {n}");
+        sleep(Duration::from_millis(200)).await;
+    }
 }
 
 fn spawn_task<F: Future<Output = ()> + Send + 'static>(future: F) {
@@ -58,15 +57,12 @@ fn main() {
     let (task_sender, task_receiver) = channel();
     TASK_SENDER.set(task_sender).unwrap();
     let mut context = Context::from_waker(noop_waker_ref());
-    println!("Start with one job. Each job flips a coin");
-    println!("and, if it's heads, spawns two more jobs.");
-    println!("Let's see how long this random walk can go!");
-    let mut tasks = vec![job(1)];
+    println!("Start with one task (many_jobs), which spawns");
+    println!("ten other tasks (job) in two seconds.\n");
+    let mut tasks: Vec<BoxedFuture> = vec![Box::pin(many_jobs())];
     loop {
         // Poll all existing tasks, removing any that are finished.
-        let is_pending = |task: &mut Pin<Box<dyn Future<Output = ()> + Send>>| {
-            task.as_mut().poll(&mut context).is_pending()
-        };
+        let is_pending = |task: &mut BoxedFuture| task.as_mut().poll(&mut context).is_pending();
         tasks.retain_mut(is_pending);
         // Any of the tasks we just polled might've called spawn_task() internally. Drain the
         // TASK_SENDER channel into our local tasks Vec.
