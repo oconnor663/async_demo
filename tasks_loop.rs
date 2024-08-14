@@ -37,6 +37,7 @@ fn sleep(duration: Duration) -> SleepFuture {
 // `spawn_task` needs the `job` future to be `Send`, and unfortunately
 // current compiler limitations mean we can't do that if `job` is an
 // `async fn`. We have to use this Box + async block workaround.
+// See: https://rust-lang.github.io/async-book/07_workarounds/04_recursion.html
 fn job(n: u64) -> Pin<Box<dyn Future<Output = ()> + Send>> {
     Box::pin(async move {
         sleep(Duration::from_secs_f32(0.1)).await;
