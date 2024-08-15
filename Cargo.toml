@@ -107,6 +107,10 @@ path = "factorial.rs"
 name = "tasks_loop"
 path = "tasks_loop.rs"
 
+[[bin]]
+name = "no_pin"
+path = "no_pin.rs"
+
 [dependencies]
 crossbeam-channel = "0.5.13"
 futures = "0.3.30"
