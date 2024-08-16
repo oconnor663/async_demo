@@ -115,10 +115,16 @@ path = "no_pin.rs"
 name = "mio"
 path = "mio.rs"
 
+[[bin]]
+name = "io_uring"
+path = "io_uring.rs"
+
 [dependencies]
 anyhow = "1.0.86"
 crossbeam-channel = "0.5.13"
 futures = "0.3.30"
+io-uring = "0.6.4"
+libc = "0.2.156"
 mio = { version = "1.0.2", features = ["net", "os-poll"] }
 rand = "0.8.5"
 rayon = "1.10.0"
