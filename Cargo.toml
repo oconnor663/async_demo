@@ -119,6 +119,10 @@ path = "mio.rs"
 name = "io_uring"
 path = "io_uring.rs"
 
+[[bin]]
+name = "select"
+path = "select.rs"
+
 [dependencies]
 anyhow = "1.0.86"
 crossbeam-channel = "0.5.13"
