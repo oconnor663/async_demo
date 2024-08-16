@@ -1,7 +1,7 @@
 use futures::task::noop_waker_ref;
-use mio::net::{TcpListener, TcpStream};
 use std::future::Future;
 use std::io::{prelude::*, ErrorKind::WouldBlock};
+use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{LazyLock, Mutex, OnceLock};
@@ -18,9 +18,28 @@ fn spawn_task<F: Future<Output = ()> + Send + 'static>(future: F) {
     TASK_SENDER.get().unwrap().send(Box::pin(future)).unwrap();
 }
 
-async fn accept(listener: &mut TcpListener) -> anyhow::Result<TcpStream> {
+fn bind(addr: SocketAddr) -> anyhow::Result<mio::net::TcpListener> {
+    let mut listener = mio::net::TcpListener::bind(addr)?;
+    MIO_POLL.lock().unwrap().registry().register(
+        &mut listener,
+        mio::Token(0), // We ignore tokens and wake all tasks on any event.
+        mio::Interest::READABLE,
+    )?;
+    Ok(listener)
+}
+
+async fn accept(
+    listener: &mut mio::net::TcpListener,
+) -> anyhow::Result<(mio::net::TcpStream, SocketAddr)> {
     let future = futures::future::poll_fn(|context| match listener.accept() {
-        Ok((stream, _addr)) => Poll::Ready(Ok(stream)),
+        Ok((mut stream, addr)) => {
+            MIO_POLL.lock().unwrap().registry().register(
+                &mut stream,
+                mio::Token(0), // We ignore tokens and wake all tasks on any event.
+                mio::Interest::READABLE,
+            )?;
+            Poll::Ready(Ok((stream, addr)))
+        }
         Err(e) if e.kind() == WouldBlock => {
             WAKERS.lock().unwrap().push(context.waker().clone());
             Poll::Pending
@@ -30,7 +49,7 @@ async fn accept(listener: &mut TcpListener) -> anyhow::Result<TcpStream> {
     future.await
 }
 
-async fn read(stream: &mut TcpStream, buf: &mut [u8]) -> anyhow::Result<usize> {
+async fn read(stream: &mut mio::net::TcpStream, buf: &mut [u8]) -> anyhow::Result<usize> {
     let future = futures::future::poll_fn(|context| match stream.read(buf) {
         Ok(n) => Poll::Ready(Ok(n)),
         Err(e) if e.kind() == WouldBlock => {
@@ -42,14 +61,14 @@ async fn read(stream: &mut TcpStream, buf: &mut [u8]) -> anyhow::Result<usize> {
     future.await
 }
 
-async fn echo_stream(mut stream: TcpStream) -> anyhow::Result<()> {
+async fn echo_stream(mut stream: mio::net::TcpStream, addr: SocketAddr) -> anyhow::Result<()> {
     loop {
         let mut buf = [0; 1024];
         let n = read(&mut stream, &mut buf).await?;
         if n == 0 {
             return Ok(());
         }
-        println!("read: \"{}\"", buf[..n].escape_ascii());
+        println!("read({}): \"{}\"", addr.port(), buf[..n].escape_ascii());
         // Quick and dirty: assume this write won't block.
         writeln!(&mut stream, "echo: \"{}\"", buf[..n].escape_ascii())?;
     }
@@ -57,22 +76,12 @@ async fn echo_stream(mut stream: TcpStream) -> anyhow::Result<()> {
 
 async fn echo_listener() -> anyhow::Result<()> {
     let addr = "127.0.0.1:8000".parse()?;
-    let mut listener = TcpListener::bind(addr)?;
-    MIO_POLL.lock().unwrap().registry().register(
-        &mut listener,
-        mio::Token(0), // We ignore tokens and wake all tasks on any event.
-        mio::Interest::READABLE,
-    )?;
+    let mut listener = bind(addr)?;
     loop {
-        let mut stream = accept(&mut listener).await?;
-        MIO_POLL.lock().unwrap().registry().register(
-            &mut stream,
-            mio::Token(0), // We ignore tokens and wake all tasks on any event.
-            mio::Interest::READABLE,
-        )?;
-        println!("connection opened");
-        spawn_task(async {
-            echo_stream(stream).await.expect("stream error");
+        let (stream, addr) = accept(&mut listener).await?;
+        println!("connection opened: {addr}");
+        spawn_task(async move {
+            echo_stream(stream, addr).await.expect("stream error");
         });
     }
 }
