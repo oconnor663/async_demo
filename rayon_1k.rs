@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 fn job(n: u64) {
+    println!("start {n}");
     std::thread::sleep(Duration::from_secs(1));
-    println!("{n}");
+    println!("end {n}");
 }
 
 fn main() {

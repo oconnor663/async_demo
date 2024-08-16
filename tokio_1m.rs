@@ -2,8 +2,8 @@ use futures::future;
 use std::time::{Duration, Instant};
 
 async fn job(_n: u64) {
-    tokio::time::sleep(Duration::from_secs(1)).await;
     // Don't print. A million prints is too much output for the Playground.
+    tokio::time::sleep(Duration::from_secs(1)).await;
 }
 
 #[tokio::main]

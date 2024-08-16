@@ -2,8 +2,9 @@ use futures::future;
 use std::time::Duration;
 
 async fn job(n: u64) {
+    println!("start {n}");
     std::thread::sleep(Duration::from_secs(1));
-    println!("{n}");
+    println!("end {n}");
 }
 
 #[tokio::main]

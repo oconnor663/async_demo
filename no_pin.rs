@@ -61,26 +61,34 @@ fn sleep(duration: Duration) -> SleepFuture {
 }
 
 struct JobFuture {
-    sleep_future: SleepFuture,
     n: u64,
+    started: bool,
+    sleep_future: SleepFuture,
 }
 
 impl Future for JobFuture {
     type Output = ();
 
     fn poll(&mut self, context: &mut Context) -> Poll<()> {
+        if !self.started {
+            println!("start {}", self.n);
+            self.started = true;
+        }
         if self.sleep_future.poll(context).is_pending() {
             Poll::Pending
         } else {
-            println!("{}", self.n);
+            println!("end {}", self.n);
             Poll::Ready(())
         }
     }
 }
 
 fn job(n: u64) -> JobFuture {
-    let sleep_future = sleep(Duration::from_secs(1));
-    JobFuture { sleep_future, n }
+    JobFuture {
+        n,
+        started: false,
+        sleep_future: sleep(Duration::from_secs(1)),
+    }
 }
 
 struct JoinFuture<F> {

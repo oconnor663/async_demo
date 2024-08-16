@@ -41,15 +41,15 @@ fn spawn_task<F: Future<Output = ()> + Send + 'static>(future: F) {
 }
 
 async fn job(n: u64) {
+    println!("start {n}");
     sleep(Duration::from_secs(1)).await;
-    println!("finished job {n}");
+    println!("end {n}");
 }
 
 async fn async_main() {
     println!("Spawn 10 tasks in 2 seconds and wait for all of them to finish.\n");
     for n in 1..=10 {
         spawn_task(job(n));
-        println!("started job {n}");
         sleep(Duration::from_millis(200)).await;
     }
     // NOTE: Tokio exits when the main task is finished, so we need to collect task
