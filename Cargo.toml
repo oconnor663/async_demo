@@ -123,6 +123,10 @@ path = "io_uring.rs"
 name = "select"
 path = "select.rs"
 
+[[bin]]
+name = "poll"
+path = "poll.rs"
+
 [dependencies]
 anyhow = "1.0.86"
 crossbeam-channel = "0.5.13"
